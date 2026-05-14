@@ -8,10 +8,19 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 load_dotenv()
 
+# --- FUNÇÃO PARA PEGAR O CAMINHO DO JSON (AJUSTADA PARA O RENDER) ---
+def buscar_caminho_json():
+    # Primeiro tenta achar na pasta atual (raiz), que é onde o Render coloca o Secret File
+    caminho_raiz = os.path.join(os.getcwd(), 'credenciais.json')
+    if os.path.exists(caminho_raiz):
+        return caminho_raiz
+    # Se não achar na raiz, procura dentro da pasta backend (como era no seu PC)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credenciais.json')
+
 # --- FUNÇÕES GOOGLE SHEETS ---
 def sincronizar_google_sheets(nome_prod, categoria, qtd, preco):
     try:
-        caminho_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credenciais.json')
+        caminho_json = buscar_caminho_json()
         escopo = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
                   "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_name(caminho_json, escopo)
@@ -25,7 +34,7 @@ def sincronizar_google_sheets(nome_prod, categoria, qtd, preco):
 
 def atualizar_estoque_google(nome_prod, novo_estoque):
     try:
-        caminho_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credenciais.json')
+        caminho_json = buscar_caminho_json()
         escopo = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
                   "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_name(caminho_json, escopo)
@@ -40,7 +49,7 @@ def atualizar_estoque_google(nome_prod, novo_estoque):
 
 def sincronizar_do_google_para_banco():
     try:
-        caminho_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credenciais.json')
+        caminho_json = buscar_caminho_json()
         escopo = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
                   "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_name(caminho_json, escopo)
@@ -71,17 +80,22 @@ def sincronizar_do_google_para_banco():
 # --- CONFIGURAÇÃO DO FLASK E BANCO DE DADOS ---
 pasta_frontend = os.path.abspath(os.path.join(os.path.dirname(__name__), 'frontend'))
 app = Flask(__name__, template_folder=pasta_frontend)
-app.secret_key = 'chave_super_secreta_do_projeto_chopp'
+app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_padrao')
 
 def get_db_connection():
-    conn = psycopg2.connect(
-        host=os.getenv('DB_HOST'),
-        database=os.getenv('DB_NAME'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        port=os.getenv('DB_PORT')
-    )
-    return conn
+    # O Render usa a variável DATABASE_URL para conectar
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        return psycopg2.connect(db_url)
+    else:
+        # Se não tiver DATABASE_URL (caso você rode no seu PC), usa os dados individuais
+        return psycopg2.connect(
+            host=os.getenv('DB_HOST'),
+            database=os.getenv('DB_NAME'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            port=os.getenv('DB_PORT')
+        )
 
 @app.route('/')
 def home():
@@ -147,15 +161,12 @@ def painel_admin():
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            
             cur.execute('SELECT * FROM usuario ORDER BY id_usuario DESC')
             usuarios = cur.fetchall()
             cur.execute('SELECT * FROM produto ORDER BY id_produto DESC')
             produtos = cur.fetchall()
             cur.execute('SELECT * FROM equipamento ORDER BY id_equipamento DESC')
             equipamentos = cur.fetchall()
-            
-            # Busca Pedidos (agora trazendo o nome da chopeira também, se houver)
             cur.execute('''
                 SELECT p.id_pedido, u.nome, prod.nome, ip.quantidade, p.status, p.data_pedido, e.nome
                 FROM pedido p
@@ -166,7 +177,6 @@ def painel_admin():
                 ORDER BY p.id_pedido DESC
             ''')
             pedidos = cur.fetchall()
-            
             cur.close()
             conn.close()
             return render_template('admin.html', usuarios=usuarios, produtos=produtos, pedidos=pedidos, equipamentos=equipamentos, sucesso=sucesso)
@@ -264,14 +274,10 @@ def painel_cliente():
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            
             cur.execute('SELECT * FROM produto WHERE quantidade_estoque > 0 ORDER BY nome ASC')
             produtos = cur.fetchall()
-            
-            # Busca as chopeiras que estão livres
             cur.execute("SELECT * FROM equipamento WHERE status = 'disponivel'")
             equipamentos = cur.fetchall()
-            
             cur.execute('''
                 SELECT p.id_pedido, prod.nome, ip.quantidade, p.data_pedido, p.status, e.nome 
                 FROM pedido p
@@ -282,7 +288,6 @@ def painel_cliente():
                 ORDER BY p.data_pedido DESC
             ''', (id_user_logado,))
             meus_pedidos = cur.fetchall()
-            
             cur.close()
             conn.close()
             return render_template('cliente.html', nome=session['nome'], produtos=produtos, equipamentos=equipamentos, meus_pedidos=meus_pedidos, sucesso=sucesso, erro=erro)
@@ -295,37 +300,28 @@ def fazer_pedido():
     if 'id_usuario' in session:
         id_produto = request.form['id_produto']
         quantidade_pedida = int(request.form['quantidade'])
-        id_equipamento = request.form.get('id_equipamento') # Pega a chopeira, se o cliente escolheu
-        
+        id_equipamento = request.form.get('id_equipamento')
         conn = get_db_connection()
         cur = conn.cursor()
-        
         try:
             if id_equipamento:
-                # Se o cliente escolheu chopeira, salva o ID dela no pedido
                 cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status, id_equipamento) VALUES (%s, %s, %s, %s) RETURNING id_pedido", 
                             (session['id_usuario'], 'Retirada', 'pendente', id_equipamento))
                 id_pedido = cur.fetchone()[0]
-                # E muda o status da máquina para "Em Uso"
                 cur.execute("UPDATE equipamento SET status = 'em_uso' WHERE id_equipamento = %s", (id_equipamento,))
             else:
-                # Se não escolheu chopeira
                 cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status) VALUES (%s, %s, %s) RETURNING id_pedido", 
                             (session['id_usuario'], 'Retirada', 'pendente'))
                 id_pedido = cur.fetchone()[0]
-                
             cur.execute("INSERT INTO item_pedido (id_pedido, id_produto, quantidade) VALUES (%s, %s, %s)",
                         (id_pedido, id_produto, quantidade_pedida))
             cur.execute("UPDATE produto SET quantidade_estoque = quantidade_estoque - %s WHERE id_produto = %s",
                         (quantidade_pedida, id_produto))
-            
             cur.execute("SELECT nome, quantidade_estoque FROM produto WHERE id_produto = %s", (id_produto,))
             p_info = cur.fetchone()
-            
             conn.commit()
             cur.close()
             conn.close()
-            
             atualizar_estoque_google(p_info[0], p_info[1])
             return redirect(url_for('painel_cliente', sucesso="Pedido feito com sucesso!"))
         except Exception as e:
@@ -338,4 +334,6 @@ def logout():
     return redirect(url_for('tela_login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # No PC, roda na porta 5000. Na nuvem, o Render define a porta automaticamente.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
