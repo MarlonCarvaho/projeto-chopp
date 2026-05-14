@@ -78,7 +78,8 @@ def sincronizar_do_google_para_banco():
         return False
 
 # --- CONFIGURAÇÃO DO FLASK E BANCO DE DADOS ---
-pasta_frontend = os.path.abspath(os.path.join(os.path.dirname(__name__), 'frontend'))
+# Procura a pasta frontend um nível acima da pasta backend
+pasta_frontend = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
 app = Flask(__name__, template_folder=pasta_frontend)
 app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_padrao')
 
