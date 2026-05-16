@@ -5,24 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - Projeto Chopp</title>
     <style>
-        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; margin: 0; }
-        h1, h2, h3 { color: #FF8C00; }
-        .logout { float: right; color: #ff4d4d; text-decoration: none; font-weight: bold; border: 1px solid #ff4d4d; padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
-        .logout:hover { background: #ff4d4d; color: white; }
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        h1, h2 { color: #FF8C00; }
+        .logout { float: right; color: #ff4d4d; text-decoration: none; border: 1px solid #ff4d4d; padding: 8px 15px; border-radius: 5px; }
         .box { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px solid #333; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border-bottom: 1px solid #333; padding: 12px; text-align: left; }
-        th { border-bottom: 2px solid #FF8C00; color: #FF8C00; text-transform: uppercase; font-size: 13px; }
+        th { color: #FF8C00; text-transform: uppercase; font-size: 13px; }
         input, select { padding: 10px; border-radius: 5px; background: #2c2c2c; color: white; border: 1px solid #444; margin-right: 10px; margin-bottom: 10px; }
-        button { background: #FF8C00; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #121212; transition: 0.3s; }
-        button:hover { background: #e67e00; }
-        .btn-sync { background: #00cc66; color: white; float: right; text-decoration: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; }
-        .btn-sync:hover { background: #00994c; }
-        .sucesso { background: #00cc6622; color: #00cc66; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #00cc66; margin-bottom: 20px; }
-        .erro { background: #ff4d4d22; color: #ff4d4d; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #ff4d4d; margin-bottom: 20px; }
-        .form-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-delete:hover { background: #cc3333; }
+        button { background: #FF8C00; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #121212; }
+        .btn-delete { background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; }
+        .btn-admin { background: #00cc66; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; }
+        .sucesso { background: #00cc6622; color: #00cc66; padding: 15px; border-left: 5px solid #00cc66; margin-bottom: 20px; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -30,105 +24,32 @@
     <h1>🍺 Painel do Administrador</h1>
 
     {% if sucesso %} <div class="sucesso">{{ sucesso }}</div> {% endif %}
-    {% if erro %} <div class="erro">{{ erro }}</div> {% endif %}
-
-    <div class="box">
-        <a href="/sincronizar_estoque" class="btn-sync">🔄 Sincronizar da Planilha</a>
-        <h2>📦 Estoque de Produtos</h2>
-        <form action="/cadastrar_produto" method="POST" class="form-inline">
-            <input type="text" name="nome" placeholder="Nome do Produto" required>
-            <select name="categoria" required>
-                <option value="Chopp">Chopp</option>
-                <option value="Suprimento">Suprimento</option>
-                <option value="Gás">Gás</option>
-            </select>
-            <input type="number" name="quantidade" placeholder="Qtd" required style="width: 80px;">
-            <input type="text" name="preco" placeholder="Preço (Ex: 45.00)" required style="width: 120px;">
-            <input type="text" name="imagem_url" placeholder="Imagem (ex: chopp.webp)" style="width: 180px;">
-            <input type="text" name="variacao" placeholder="Tamanhos (ex: 30L, 50L)" style="width: 180px;">
-            <button type="submit">Adicionar Produto</button>
-        </form>
-
-        <table>
-            <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Imagem</th><th>Variações</th><th>Acções</th></tr>
-            {% for p in produtos %}
-            <tr>
-                <td>{{ p[0] }}</td>
-                <td>{{ p[1] }}</td>
-                <td>{{ p[2] }}</td>
-                <td>{{ p[3] }}</td>
-                <td>R$ {{ p[4] }}</td>
-                <td style="color: #00cc66;">{{ p[5] if p[5] else 'default.webp' }}</td>
-                <td style="color: #aaa;">{{ p[6] if p[6] else '-' }}</td>
-                <td>
-                    <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Tem a certeza que deseja eliminar o produto {{ p[1] }}?');">
-                        <button type="submit" class="btn-delete">Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-
-    <div class="box">
-        <h2>⚙️ Equipamentos (Chopeiras)</h2>
-        <form action="/cadastrar_equipamento" method="POST" class="form-inline">
-            <input type="text" name="nome" placeholder="Nome/Modelo da Chopeira" required>
-            <select name="status" required>
-                <option value="disponivel">Disponível</option>
-                <option value="em_uso">Em Uso</option>
-                <option value="manutencao">Manutenção</option>
-            </select>
-            <button type="submit">Adicionar Equipamento</button>
-        </form>
-        
-        <table>
-            <tr><th>ID</th><th>Nome</th><th>Status</th><th>Ação</th></tr>
-            {% for e in equipamentos %}
-            <tr>
-                <td>{{ e[0] }}</td>
-                <td>{{ e[1] }}</td>
-                <td>{{ e[2].upper() }}</td>
-                <td>
-                    <form action="/atualizar_equipamento" method="POST" style="margin:0;">
-                        <input type="hidden" name="id_equipamento" value="{{ e[0] }}">
-                        <select name="status" style="margin:0; padding:5px;">
-                            <option value="disponivel" {% if e[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
-                            <option value="em_uso" {% if e[2] == 'em_uso' %}selected{% endif %}>Em Uso</option>
-                            <option value="manutencao" {% if e[2] == 'manutencao' %}selected{% endif %}>Manutenção</option>
-                        </select>
-                        <button type="submit" style="padding: 5px 10px;">Atualizar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
 
     <div class="box">
         <h2>🚚 Gerenciar Pedidos</h2>
         <table>
-            <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Produto</th><th>Qtd</th><th>Variação</th><th>Chopeira</th><th>Data</th><th>Status</th><th>Atualizar</th></tr>
+            <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Produto</th><th>Data</th><th>Status</th><th>Ação</th></tr>
             {% for ped in pedidos %}
             <tr>
                 <td>#{{ ped[0] }}</td>
                 <td>{{ ped[1] }}</td>
-                <td style="color:#00cc66; font-weight:bold;">{{ ped[8] }}</td>
-                <td>{{ ped[2] }}</td>
-                <td>{{ ped[3] }}x</td>
-                <td style="color: #aaa;">{{ ped[7] if ped[7] else '-' }}</td>
-                <td>{{ ped[6] if ped[6] else 'Nenhuma' }}</td>
+                <td style="color:#00cc66;">{{ ped[8] }}</td>
+                <td>{{ ped[2] }} ({{ ped[3] }}x)</td>
                 <td>{{ ped[5].strftime('%d/%m %H:%M') if ped[5] else '' }}</td>
-                <td><strong>{{ ped[4].upper() }}</strong></td>
+                <td><strong>
+                    {% if ped[4] == 'apto_retirada' %}APTO P/ RETIRADA
+                    {% else %}{{ ped[4].upper() }}{% endif %}
+                </strong></td>
                 <td>
                     <form action="/atualizar_pedido" method="POST" style="margin:0;">
                         <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
-                        <select name="status" style="margin:0; padding:5px;">
+                        <select name="status" style="padding:5px; margin:0;">
                             <option value="pendente" {% if ped[4] == 'pendente' %}selected{% endif %}>Pendente</option>
                             <option value="em_preparo" {% if ped[4] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
-                            <option value="entregue" {% if ped[4] == 'entregue' %}selected{% endif %}>Entregue</option>
+                            <option value="apto_retirada" {% if ped[4] == 'apto_retirada' %}selected{% endif %}>Apto para Retirada</option>
+                            <option value="entregue" {% if ped[4] == 'entregue' %}selected{% endif %}>Entregue/Retirado</option>
                         </select>
-                        <button type="submit" style="padding: 5px 10px;">OK</button>
+                        <button type="submit" style="padding: 5px;">OK</button>
                     </form>
                 </td>
             </tr>
@@ -137,19 +58,29 @@
     </div>
 
     <div class="box">
-        <h2>👥 Usuários Cadastrados</h2>
+        <h2>👥 Controle de Usuários</h2>
         <table>
-            <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Tipo</th></tr>
+            <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Ações</th></tr>
             {% for u in usuarios %}
             <tr>
                 <td>{{ u[0] }}</td>
                 <td>{{ u[1] }}</td>
                 <td>{{ u[2] }}</td>
                 <td>{{ u[5].upper() }}</td>
+                <td>
+                    {% if u[5] != 'admin' %}
+                    <form action="/promover_usuario/{{ u[0] }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-admin" onclick="return confirm('Tornar {{ u[1] }} um Admin?');">Tornar Admin</button>
+                    </form>
+                    {% endif %}
+                    
+                    <form action="/deletar_usuario/{{ u[0] }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-delete" onclick="return confirm('Atenção: Isso excluirá o usuário {{ u[1] }} e todo o seu histórico de pedidos. Continuar?');">Excluir</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </table>
     </div>
-
 </body>
 </html>

@@ -279,34 +279,22 @@ def atualizar_equipamento():
 
 
 # ----- ÁREA DO CLIENTE COM CARRINHO -----
+# ----- ÁREA DO CLIENTE COM CARRINHO -----
 @app.route('/painel_cliente')
 def painel_cliente():
     if 'id_usuario' in session:
         sucesso = request.args.get('sucesso')
-        erro = request.args.get('erro')
         id_user_logado = session['id_usuario']
-        
-        if 'carrinho' not in session:
-            session['carrinho'] = []
+        if 'carrinho' not in session: session['carrinho'] = []
             
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            
             cur.execute('SELECT id_produto, nome, categoria, quantidade_estoque, preco, imagem_url, variacao FROM produto WHERE quantidade_estoque > 0 ORDER BY nome ASC')
             produtos_brutos = cur.fetchall()
             
-            produtos = []
-            for prod in produtos_brutos:
-                lista_var = [v.strip() for v in prod[6].split(',')] if prod[6] else []
-                produtos.append({
-                    'id': prod[0], 'nome': prod[1], 'categoria': prod[2],
-                    'estoque': prod[3], 'preco': prod[4], 'imagem': prod[5], 'variacoes': lista_var
-                })
+            produtos = [{'id': p[0], 'nome': p[1], 'categoria': p[2], 'estoque': p[3], 'preco': p[4], 'imagem': p[5], 'variacoes': [v.strip() for v in p[6].split(',')] if p[6] else []} for p in produtos_brutos]
                 
-            cur.execute("SELECT * FROM equipamento WHERE status = 'disponivel'")
-            equipamentos = cur.fetchall()
-            
             cur.execute('''
                 SELECT p.id_pedido, p.data_pedido, p.status, e.nome,
                        string_agg(prod.nome || ' (' || COALESCE(ip.variacao_escolhida, 'Padrão') || ') - ' || ip.quantidade || 'x', ', ') as itens, p.endereco_entrega
@@ -319,21 +307,18 @@ def painel_cliente():
                 ORDER BY p.data_pedido DESC
             ''', (id_user_logado,))
             meus_pedidos = cur.fetchall()
-            
             cur.close()
             conn.close()
             
-            return render_template('cliente.html', nome=session['nome'], produtos=produtos, 
-                                   equipamentos=equipamentos, meus_pedidos=meus_pedidos, 
-                                   carrinho=session['carrinho'], sucesso=sucesso, erro=erro)
+            return render_template('cliente.html', nome=session['nome'], produtos=produtos, meus_pedidos=meus_pedidos, sucesso=sucesso)
         except Exception as e:
             return f"Erro ao carregar loja: {str(e)}"
     return redirect(url_for('tela_login'))
 
-@app.route('/adicionar_carrinho', methods=['POST'])
-def adicionar_carrinho():
-    if 'id_usuario' not in session:
-        return redirect(url_for('tela_login'))
+# NOVA ROTA: Responde ao AJAX sem recarregar a tela
+@app.route('/adicionar_carrinho_ajax', methods=['POST'])
+def adicionar_carrinho_ajax():
+    if 'id_usuario' not in session: return jsonify({'status': 'erro', 'mensagem': 'Não logado'})
         
     id_produto = int(request.form['id_produto'])
     quantidade = int(request.form['quantidade'])
@@ -341,9 +326,7 @@ def adicionar_carrinho():
     nome_produto = request.form['nome_produto']
     preco_produto = float(request.form['preco_produto'])
     
-    if 'carrinho' not in session:
-        session['carrinho'] = []
-        
+    if 'carrinho' not in session: session['carrinho'] = []
     carrinho = session['carrinho']
     
     item_existe = False
@@ -354,74 +337,87 @@ def adicionar_carrinho():
             break
             
     if not item_existe:
-        carrinho.append({
-            'id_produto': id_produto,
-            'nome': nome_produto,
-            'preco': preco_produto,
-            'quantidade': quantidade,
-            'variacao': variacao
-        })
+        carrinho.append({'id_produto': id_produto, 'nome': nome_produto, 'preco': preco_produto, 'quantidade': quantidade, 'variacao': variacao})
         
     session['carrinho'] = carrinho
     session.modified = True
-    return redirect(url_for('painel_cliente', sucesso="Item adicionado ao carrinho!"))
+    return jsonify({'status': 'ok', 'nome_produto': nome_produto})
 
-@app.route('/remover_carrinho/<int:index>')
-def remover_carrinho(index):
-    if 'carrinho' in session and len(session['carrinho']) > index:
-        carrinho = session['carrinho']
-        carrinho.pop(index)
-        session['carrinho'] = carrinho
-        session.modified = True
-    return redirect(url_for('painel_cliente'))
+# NOVA ROTA: A Tela Separada de Checkout
+@app.route('/checkout')
+def checkout():
+    if 'id_usuario' not in session: return redirect(url_for('tela_login'))
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM equipamento WHERE status = 'disponivel'")
+    equipamentos = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('checkout.html', carrinho=session.get('carrinho', []), equipamentos=equipamentos)
 
 @app.route('/finalizar_pedido', methods=['POST'])
 def finalizar_pedido():
-    if 'id_usuario' not in session or not session.get('carrinho'):
-        return redirect(url_for('painel_cliente', erro="Carrinho vazio!"))
+    if 'id_usuario' not in session or not session.get('carrinho'): return redirect(url_for('painel_cliente'))
         
     id_equipamento = request.form.get('id_equipamento')
     id_equipamento = int(id_equipamento) if id_equipamento else None
-    
-    endereco_digitado = request.form.get('endereco_entrega', '').strip()
-    endereco_final = endereco_digitado if endereco_digitado else 'Retirada'
+    tipo_entrega = request.form.get('tipo_entrega')
+    endereco_final = request.form.get('endereco_entrega', '').strip() if tipo_entrega == 'entrega' else 'Retirada'
+    # 'pagamento' é recebido aqui mas ainda não tem tabela no banco, serve para lógica futura
     
     conn = get_db_connection()
     cur = conn.cursor()
     
     try:
         if id_equipamento:
-            cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status, id_equipamento) VALUES (%s, %s, %s, %s) RETURNING id_pedido", 
-                        (session['id_usuario'], endereco_final, 'pendente', id_equipamento))
+            cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status, id_equipamento) VALUES (%s, %s, %s, %s) RETURNING id_pedido", (session['id_usuario'], endereco_final, 'pendente', id_equipamento))
             id_pedido = cur.fetchone()[0]
             cur.execute("UPDATE equipamento SET status = 'em_uso' WHERE id_equipamento = %s", (id_equipamento,))
         else:
-            cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status) VALUES (%s, %s, %s) RETURNING id_pedido", 
-                        (session['id_usuario'], endereco_final, 'pendente'))
+            cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status) VALUES (%s, %s, %s) RETURNING id_pedido", (session['id_usuario'], endereco_final, 'pendente'))
             id_pedido = cur.fetchone()[0]
             
         for item in session['carrinho']:
-            cur.execute("INSERT INTO item_pedido (id_pedido, id_produto, quantidade, variacao_escolhida) VALUES (%s, %s, %s, %s)",
-                        (id_pedido, item['id_produto'], item['quantidade'], item['variacao']))
-            
-            cur.execute("UPDATE produto SET quantidade_estoque = quantidade_estoque - %s WHERE id_produto = %s RETURNING quantidade_estoque",
-                        (item['quantidade'], item['id_produto']))
+            cur.execute("INSERT INTO item_pedido (id_pedido, id_produto, quantidade, variacao_escolhida) VALUES (%s, %s, %s, %s)", (id_pedido, item['id_produto'], item['quantidade'], item['variacao']))
+            cur.execute("UPDATE produto SET quantidade_estoque = quantidade_estoque - %s WHERE id_produto = %s RETURNING quantidade_estoque", (item['quantidade'], item['id_produto']))
             novo_estoque = cur.fetchone()[0]
-            
             atualizar_estoque_google(item['nome'], novo_estoque)
             
         conn.commit()
         session['carrinho'] = [] 
         session.modified = True
-        
         cur.close()
         conn.close()
-        return redirect(url_for('painel_cliente', sucesso="Pedido finalizado com sucesso!"))
+        return redirect(url_for('painel_cliente', sucesso="Pedido gerado! Aguarde a liberação."))
     except Exception as e:
         conn.rollback()
+        return redirect(url_for('painel_cliente', sucesso=f"Erro: {str(e)}"))
+
+# ----- NOVAS ROTAS ADMIN (GERENCIAR USUÁRIOS) -----
+@app.route('/promover_usuario/<int:id_usuario>', methods=['POST'])
+def promover_usuario(id_usuario):
+    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE usuario SET tipo_usuario = 'admin' WHERE id_usuario = %s", (id_usuario,))
+        conn.commit()
         cur.close()
         conn.close()
-        return redirect(url_for('painel_cliente', erro=f"Erro ao fechar pedido: {str(e)}"))
+    return redirect(url_for('painel_admin'))
+
+@app.route('/deletar_usuario/<int:id_usuario>', methods=['POST'])
+def deletar_usuario(id_usuario):
+    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Apagando em cascata na força bruta para garantir integridade
+        cur.execute("DELETE FROM item_pedido WHERE id_pedido IN (SELECT id_pedido FROM pedido WHERE id_usuario = %s)", (id_usuario,))
+        cur.execute("DELETE FROM pedido WHERE id_usuario = %s", (id_usuario,))
+        cur.execute("DELETE FROM usuario WHERE id_usuario = %s", (id_usuario,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    return redirect(url_for('painel_admin'))
 
 @app.route('/logout')
 def logout():
