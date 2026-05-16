@@ -21,6 +21,8 @@
         .sucesso { background: #00cc6622; color: #00cc66; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #00cc66; margin-bottom: 20px; }
         .erro { background: #ff4d4d22; color: #ff4d4d; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #ff4d4d; margin-bottom: 20px; }
         .form-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-delete:hover { background: #cc3333; }
     </style>
 </head>
 <body>
@@ -48,7 +50,7 @@
         </form>
 
         <table>
-            <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Imagem</th><th>Variações</th></tr>
+            <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Imagem</th><th>Variações</th><th>Acções</th></tr>
             {% for p in produtos %}
             <tr>
                 <td>{{ p[0] }}</td>
@@ -58,6 +60,11 @@
                 <td>R$ {{ p[4] }}</td>
                 <td style="color: #00cc66;">{{ p[5] if p[5] else 'default.webp' }}</td>
                 <td style="color: #aaa;">{{ p[6] if p[6] else '-' }}</td>
+                <td>
+                    <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Tem a certeza que deseja eliminar o produto {{ p[1] }}?');">
+                        <button type="submit" class="btn-delete">Eliminar</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </table>

@@ -149,6 +149,7 @@ def fazer_login():
 def painel_admin():
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
         sucesso = request.args.get('sucesso')
+        erro = request.args.get('erro')
         try:
             conn = get_db_connection()
             cur = conn.cursor()
@@ -159,7 +160,6 @@ def painel_admin():
             cur.execute('SELECT * FROM equipamento ORDER BY id_equipamento DESC')
             equipamentos = cur.fetchall()
             
-            # ATUALIZADO: Puxando o endereço de entrega (p.endereco_entrega)
             cur.execute('''
                 SELECT p.id_pedido, u.nome, prod.nome, ip.quantidade, p.status, p.data_pedido, e.nome, ip.variacao_escolhida, p.endereco_entrega
                 FROM pedido p
@@ -172,7 +172,7 @@ def painel_admin():
             pedidos = cur.fetchall()
             cur.close()
             conn.close()
-            return render_template('admin.html', usuarios=usuarios, produtos=produtos, pedidos=pedidos, equipamentos=equipamentos, sucesso=sucesso)
+            return render_template('admin.html', usuarios=usuarios, produtos=produtos, pedidos=pedidos, equipamentos=equipamentos, sucesso=sucesso, erro=erro)
         except Exception as e:
             return f"Erro: {str(e)}"
     return redirect(url_for('tela_login'))
@@ -197,7 +197,25 @@ def cadastrar_produto():
             sincronizar_google_sheets(nome, categoria, quantidade, preco)
             return redirect(url_for('painel_admin', sucesso="Produto cadastrado!"))
         except Exception as e:
-            return f"Erro: {str(e)}"
+            return redirect(url_for('painel_admin', erro=f"Erro ao cadastrar: {str(e)}"))
+    return redirect(url_for('tela_login'))
+
+# NOVA ROTA: Eliminar Produto com Segurança
+@app.route('/deletar_produto/<int:id_produto>', methods=['POST'])
+def deletar_produto(id_produto):
+    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            # Remove referências do produto nos itens de pedidos para não quebrar a integridade
+            cur.execute("DELETE FROM item_pedido WHERE id_produto = %s", (id_produto,))
+            cur.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('painel_admin', sucesso="Produto eliminado com sucesso!"))
+        except Exception as e:
+            return redirect(url_for('painel_admin', erro=f"Erro ao eliminar produto: {str(e)}"))
     return redirect(url_for('tela_login'))
 
 @app.route('/sincronizar_estoque')
@@ -237,7 +255,7 @@ def cadastrar_equipamento():
             conn.commit()
             cur.close()
             conn.close()
-            return redirect(url_for('painel_admin', sucesso="Equipamento cadastrado!"))
+            return redirect(url_for('painel_admin', Guide="Equipamento cadastrado!"))
         except Exception as e:
             return f"Erro: {str(e)}"
     return redirect(url_for('tela_login'))
@@ -289,7 +307,6 @@ def painel_cliente():
             cur.execute("SELECT * FROM equipamento WHERE status = 'disponivel'")
             equipamentos = cur.fetchall()
             
-            # ATUALIZADO: Inclui p.endereco_entrega no histórico do cliente
             cur.execute('''
                 SELECT p.id_pedido, p.data_pedido, p.status, e.nome,
                        string_agg(prod.nome || ' (' || COALESCE(ip.variacao_escolhida, 'Padrão') || ') - ' || ip.quantidade || 'x', ', ') as itens, p.endereco_entrega
@@ -358,7 +375,6 @@ def remover_carrinho(index):
         session.modified = True
     return redirect(url_for('painel_cliente'))
 
-# ATUALIZADO: Recebe e salva o endereço
 @app.route('/finalizar_pedido', methods=['POST'])
 def finalizar_pedido():
     if 'id_usuario' not in session or not session.get('carrinho'):
