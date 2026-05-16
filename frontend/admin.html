@@ -99,7 +99,7 @@
                 <td>{{ e[1] }}</td>
                 <td>{{ e[2].upper() }}</td>
                 <td>
-                    <form action="/atualizar_equipment" method="POST" style="margin:0;">
+                    <form action="/atualizar_equipamento" method="POST" style="margin:0;">
                         <input type="hidden" name="id_equipamento" value="{{ e[0] }}">
                         <select name="status" style="margin:0; padding:5px;">
                             <option value="disponivel" {% if e[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
@@ -117,27 +117,27 @@
     <div class="box">
         <h2>🚚 Gerenciar Pedidos</h2>
         <table>
-            <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Produto</th><th>Data</th><th>Status</th><th>Mudar Status</th>
+            <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Itens</th><th>Data</th><th>Status</th><th>Mudar Status</th>
             {% if session['tipo_usuario'] == 'admin' %} <th>Remover</th> {% endif %} </tr>
             {% for ped in pedidos %}
             <tr>
                 <td>#{{ ped[0] }}</td>
                 <td>{{ ped[1] }}</td>
-                <td style="color:#00cc66;">{{ ped[8] }}</td>
-                <td>{{ ped[2] }} ({{ ped[3] }}x) - <span style="color:#aaa;">{{ ped[7] }}</span></td>
-                <td>{{ ped[5].strftime('%d/%m %H:%M') if ped[5] else '' }}</td>
+                <td style="color:#00cc66;">{{ ped[6] }}</td>
+                <td>{{ ped[2] }}</td>
+                <td>{{ ped[4].strftime('%d/%m %H:%M') if ped[4] else '' }}</td>
                 <td><strong>
-                    {% if ped[4] == 'apto_retirada' %}APTO P/ RETIRADA
-                    {% else %}{{ ped[4].upper() }}{% endif %}
+                    {% if ped[3] == 'apto_retirada' %}APTO P/ RETIRADA
+                    {% else %}{{ ped[3].upper() }}{% endif %}
                 </strong></td>
                 <td>
                     <form action="/atualizar_pedido" method="POST" style="margin:0;">
                         <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
                         <select name="status" style="padding:5px; margin:0;">
-                            <option value="pendente" {% if ped[4] == 'pendente' %}selected{% endif %}>Pendente</option>
-                            <option value="em_preparo" {% if ped[4] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
-                            <option value="apto_retirada" {% if ped[4] == 'apto_retirada' %}selected{% endif %}>Apto para Retirada</option>
-                            <option value="entregue" {% if ped[4] == 'entregue' %}selected{% endif %}>Entregue/Retirado</option>
+                            <option value="pendente" {% if ped[3] == 'pendente' %}selected{% endif %}>Pendente</option>
+                            <option value="em_preparo" {% if ped[3] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
+                            <option value="apto_retirada" {% if ped[3] == 'apto_retirada' %}selected{% endif %}>Apto para Retirada</option>
+                            <option value="entregue" {% if ped[3] == 'entregue' %}selected{% endif %}>Entregue/Retirado</option>
                         </select>
                         <button type="submit" style="padding: 5px;">Mudar</button>
                     </form>
@@ -164,21 +164,21 @@
                 <td>{{ u[0] }}</td>
                 <td>{{ u[1] }}</td>
                 <td>{{ u[2] }}</td>
-                <td style="font-weight: bold; color: #00bfff;">{{ u[5].upper() }}</td>
+                <td style="font-weight: bold; color: #00bfff;">{{ u[3].upper() }}</td>
                 <td>
-                    {% if u[5] != 'admin' %}
+                    {% if u[3] != 'admin' %}
                     <form action="/promover_usuario/{{ u[0] }}/admin" method="POST" style="display:inline;">
                         <button type="submit" class="btn-cargo">Subir p/ Admin</button>
                     </form>
                     {% endif %}
                     
-                    {% if u[5] != 'auxiliar' %}
+                    {% if u[3] != 'auxiliar' %}
                     <form action="/promover_usuario/{{ u[0] }}/auxiliar" method="POST" style="display:inline;">
                         <button type="submit" class="btn-aux">Subir p/ Auxiliar</button>
                     </form>
                     {% endif %}
                     
-                    {% if u[5] != 'cliente' and u[5] != 'admin' %}
+                    {% if u[3] != 'cliente' and u[3] != 'admin' %}
                     <form action="/promover_usuario/{{ u[0] }}/cliente" method="POST" style="display:inline; margin-left: 5px;">
                         <button type="submit" style="background:#444; color:white;">Rebaixar a Cliente</button>
                     </form>
