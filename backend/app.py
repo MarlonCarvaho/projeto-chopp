@@ -140,7 +140,7 @@ def fazer_login():
         session['id_usuario'] = usuario[0]
         session['nome'] = usuario[1]
         session['tipo_usuario'] = usuario[2]
-        session['carrinho'] = [] # Inicia o carrinho limpo no login
+        session['carrinho'] = [] 
         return redirect(url_for('painel_admin')) if usuario[2] == 'admin' else redirect(url_for('painel_cliente'))
     return render_template('login.html', erro="E-mail ou senha incorretos.")
 
@@ -158,8 +158,10 @@ def painel_admin():
             produtos = cur.fetchall()
             cur.execute('SELECT * FROM equipamento ORDER BY id_equipamento DESC')
             equipamentos = cur.fetchall()
+            
+            # ATUALIZADO: Puxando o endereço de entrega (p.endereco_entrega)
             cur.execute('''
-                SELECT p.id_pedido, u.nome, prod.nome, ip.quantidade, p.status, p.data_pedido, e.nome, ip.variacao_escolhida
+                SELECT p.id_pedido, u.nome, prod.nome, ip.quantidade, p.status, p.data_pedido, e.nome, ip.variacao_escolhida, p.endereco_entrega
                 FROM pedido p
                 JOIN usuario u ON p.id_usuario = u.id_usuario
                 JOIN item_pedido ip ON p.id_pedido = ip.id_pedido
@@ -183,7 +185,7 @@ def cadastrar_produto():
         quantidade = request.form['quantidade']
         preco = request.form['preco']
         imagem = request.form.get('imagem_url', 'default.webp')
-        variacao = request.form.get('variacao', '') # Opções separadas por vírgula. Ex: '300ml, 500ml'
+        variacao = request.form.get('variacao', '')
         try:
             conn = get_db_connection()
             cur = conn.cursor()
@@ -273,7 +275,6 @@ def painel_cliente():
             conn = get_db_connection()
             cur = conn.cursor()
             
-            # Pega produtos e trata as strings de variações para virarem listas
             cur.execute('SELECT id_produto, nome, categoria, quantidade_estoque, preco, imagem_url, variacao FROM produto WHERE quantidade_estoque > 0 ORDER BY nome ASC')
             produtos_brutos = cur.fetchall()
             
@@ -288,16 +289,16 @@ def painel_cliente():
             cur.execute("SELECT * FROM equipamento WHERE status = 'disponivel'")
             equipamentos = cur.fetchall()
             
-            # Histórico agrupado de pedidos
+            # ATUALIZADO: Inclui p.endereco_entrega no histórico do cliente
             cur.execute('''
                 SELECT p.id_pedido, p.data_pedido, p.status, e.nome,
-                       string_agg(prod.nome || ' (' || COALESCE(ip.variacao_escolhida, 'Padrão') || ') - ' || ip.quantidade || 'x', ', ') as itens
+                       string_agg(prod.nome || ' (' || COALESCE(ip.variacao_escolhida, 'Padrão') || ') - ' || ip.quantidade || 'x', ', ') as itens, p.endereco_entrega
                 FROM pedido p
                 JOIN item_pedido ip ON p.id_pedido = ip.id_pedido
                 JOIN produto prod ON ip.id_produto = prod.id_produto
                 LEFT JOIN equipamento e ON p.id_equipamento = e.id_equipamento
                 WHERE p.id_usuario = %s
-                GROUP BY p.id_pedido, p.data_pedido, p.status, e.nome
+                GROUP BY p.id_pedido, p.data_pedido, p.status, e.nome, p.endereco_entrega
                 ORDER BY p.data_pedido DESC
             ''', (id_user_logado,))
             meus_pedidos = cur.fetchall()
@@ -328,7 +329,6 @@ def adicionar_carrinho():
         
     carrinho = session['carrinho']
     
-    # Se o item com a mesma variação já estiver no carrinho, soma a quantidade
     item_existe = False
     for item in carrinho:
         if item['id_produto'] == id_produto and item['variacao'] == variacao:
@@ -358,6 +358,7 @@ def remover_carrinho(index):
         session.modified = True
     return redirect(url_for('painel_cliente'))
 
+# ATUALIZADO: Recebe e salva o endereço
 @app.route('/finalizar_pedido', methods=['POST'])
 def finalizar_pedido():
     if 'id_usuario' not in session or not session.get('carrinho'):
@@ -366,41 +367,40 @@ def finalizar_pedido():
     id_equipamento = request.form.get('id_equipamento')
     id_equipamento = int(id_equipamento) if id_equipamento else None
     
+    endereco_digitado = request.form.get('endereco_entrega', '').strip()
+    endereco_final = endereco_digitado if endereco_digitado else 'Retirada'
+    
     conn = get_db_connection()
     cur = conn.cursor()
     
     try:
-        # Cria um ÚNICO pedido unificado para o cliente
         if id_equipamento:
             cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status, id_equipamento) VALUES (%s, %s, %s, %s) RETURNING id_pedido", 
-                        (session['id_usuario'], 'Retirada', 'pendente', id_equipamento))
+                        (session['id_usuario'], endereco_final, 'pendente', id_equipamento))
             id_pedido = cur.fetchone()[0]
             cur.execute("UPDATE equipamento SET status = 'em_uso' WHERE id_equipamento = %s", (id_equipamento,))
         else:
             cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status) VALUES (%s, %s, %s) RETURNING id_pedido", 
-                        (session['id_usuario'], 'Retirada', 'pendente'))
+                        (session['id_usuario'], endereco_final, 'pendente'))
             id_pedido = cur.fetchone()[0]
             
-        # Insere todos os itens salvos no carrinho dentro desse mesmo ID de pedido
         for item in session['carrinho']:
             cur.execute("INSERT INTO item_pedido (id_pedido, id_produto, quantidade, variacao_escolhida) VALUES (%s, %s, %s, %s)",
                         (id_pedido, item['id_produto'], item['quantidade'], item['variacao']))
             
-            # Atualiza o estoque no banco local
             cur.execute("UPDATE produto SET quantidade_estoque = quantidade_estoque - %s WHERE id_produto = %s RETURNING quantidade_estoque",
                         (item['quantidade'], item['id_produto']))
             novo_estoque = cur.fetchone()[0]
             
-            # Sincroniza com o Google Sheets item por item
             atualizar_estoque_google(item['nome'], novo_estoque)
             
         conn.commit()
-        session['carrinho'] = [] # Limpa o carrinho
+        session['carrinho'] = [] 
         session.modified = True
         
         cur.close()
         conn.close()
-        return redirect(url_for('painel_cliente', sucesso="Pedido unificado finalizado com sucesso!"))
+        return redirect(url_for('painel_cliente', sucesso="Pedido finalizado com sucesso!"))
     except Exception as e:
         conn.rollback()
         cur.close()

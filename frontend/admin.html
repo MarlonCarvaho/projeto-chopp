@@ -33,7 +33,6 @@
     <div class="box">
         <a href="/sincronizar_estoque" class="btn-sync">🔄 Sincronizar da Planilha</a>
         <h2>📦 Estoque de Produtos</h2>
-        
         <form action="/cadastrar_produto" method="POST" class="form-inline">
             <input type="text" name="nome" placeholder="Nome do Produto" required>
             <select name="categoria" required>
@@ -43,10 +42,8 @@
             </select>
             <input type="number" name="quantidade" placeholder="Qtd" required style="width: 80px;">
             <input type="text" name="preco" placeholder="Preço (Ex: 45.00)" required style="width: 120px;">
-            
             <input type="text" name="imagem_url" placeholder="Imagem (ex: chopp.webp)" style="width: 180px;">
             <input type="text" name="variacao" placeholder="Tamanhos (ex: 30L, 50L)" style="width: 180px;">
-            
             <button type="submit">Adicionar Produto</button>
         </form>
 
@@ -104,11 +101,12 @@
     <div class="box">
         <h2>🚚 Gerenciar Pedidos</h2>
         <table>
-            <tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Qtd</th><th>Variação</th><th>Chopeira</th><th>Data</th><th>Status</th><th>Atualizar</th></tr>
+            <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Produto</th><th>Qtd</th><th>Variação</th><th>Chopeira</th><th>Data</th><th>Status</th><th>Atualizar</th></tr>
             {% for ped in pedidos %}
             <tr>
                 <td>#{{ ped[0] }}</td>
                 <td>{{ ped[1] }}</td>
+                <td style="color:#00cc66; font-weight:bold;">{{ ped[8] }}</td>
                 <td>{{ ped[2] }}</td>
                 <td>{{ ped[3] }}x</td>
                 <td style="color: #aaa;">{{ ped[7] if ped[7] else '-' }}</td>
