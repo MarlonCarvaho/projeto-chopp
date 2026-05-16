@@ -35,47 +35,72 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
+        /* Grid da Vitrine */
+        .vitrine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
         .produto-card { 
             background: #2c2c2c; 
-            padding: 20px; 
+            padding: 15px; 
             border-radius: 8px; 
-            margin-bottom: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-left: 5px solid #FF8C00;
+            border-top: 5px solid #FF8C00;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .produto-img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            background: #1a1a1a;
+            border-radius: 5px;
+            margin-bottom: 15px;
         }
 
         button { 
             background: #FF8C00; 
             border: none; 
-            padding: 10px 20px; 
+            padding: 10px 15px; 
             font-weight: bold; 
             cursor: pointer; 
             border-radius: 5px; 
             color: #121212; 
             transition: 0.3s;
+            width: 100%;
+            margin-top: 10px;
         }
-        button:hover { background: #e67e00; transform: translateY(-2px); }
+        button:hover { background: #e67e00; transform: translateY(-1px); }
 
         .sucesso { background: #00cc6622; color: #00cc66; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #00cc66; margin-bottom: 20px; }
         .erro { background: #ff4d4d22; color: #ff4d4d; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #ff4d4d; margin-bottom: 20px; }
         
-        /* Formulários */
         select, input[type="number"] { 
-            padding: 10px; 
+            padding: 8px; 
             background: #121212; 
             color: white; 
             border: 1px solid #444; 
-            border-radius: 5px; 
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 8px;
         }
-        select:focus, input:focus { outline: none; border-color: #FF8C00; }
 
-        /* Tabela Meus Pedidos */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border-bottom: 1px solid #333; padding: 15px; text-align: left; }
+        /* Carrinho de Compras */
+        .carrinho-tabela, table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border-bottom: 1px solid #333; padding: 12px; text-align: left; }
         th { border-bottom: 2px solid #FF8C00; color: #FF8C00; text-transform: uppercase; font-size: 13px;}
-        tr:hover { background: #252525; }
+        
+        .btn-remover {
+            color: #ff4d4d;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
         .status-pendente { color: #ff4d4d; font-weight: bold; }
         .status-preparo { color: #FF8C00; font-weight: bold; }
@@ -89,73 +114,126 @@
     {% if sucesso %} <div class="sucesso">{{ sucesso }}</div> {% endif %}
     {% if erro %} <div class="erro">{{ erro }}</div> {% endif %}
 
-    <div class="box">
-        <h3>🍺 Produtos Disponíveis</h3>
-        
-        {% if produtos %}
-            {% for p in produtos %}
-            <div class="produto-card">
-                <div>
-                    <strong style="font-size: 1.4em; color: #FF8C00;">{{ p[1] }}</strong> <br>
-                    <span style="color: #aaa; font-size: 0.9em;">Categoria: {{ p[2] }}</span><br>
-                    <span style="font-size: 0.9em;">Estoque: {{ p[3] }} disponíveis</span> <br>
-                    <strong style="font-size: 1.2em; color: #00cc66;">R$ {{ p[4] }}</strong>
-                </div>
-                <form action="/fazer_pedido" method="POST" style="margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <input type="hidden" name="id_produto" value="{{ p[0] }}">
-                    
-                    <input type="number" name="quantidade" value="1" min="1" max="{{ p[3] }}" style="width: 60px;" title="Quantidade de Barris">
-                    
-                    <select name="id_equipamento" style="max-width: 200px;">
-                        <option value="">Sem chopeira...</option>
+    <div class="box" style="border-color: #00cc66;">
+        <h3>🛒 Meu Carrinho de Compras</h3>
+        {% if carrinho %}
+            <table class="carrinho-tabela">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Variação</th>
+                        <th>Qtd</th>
+                        <th>Preço Un.</th>
+                        <th>Total</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in carrinho %}
+                    <tr>
+                        <td>{{ item.nome }}</td>
+                        <td><span style="color:#aaa;">{{ item.variacao }}</span></td>
+                        <td>{{ item.quantidade }}x</td>
+                        <td>R$ {{ item.preco }}</td>
+                        <td style="color:#00cc66; font-weight:bold;">R$ {{ "%.2f"|format(item.preco * item.quantidade) }}</td>
+                        <td><a href="/remover_carrinho/{{ loop.index0 }}" class="btn-remover">Remover</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <form action="/finalizar_pedido" method="POST" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display:block; margin-bottom:5px; color:#aaa;">Vai precisar de Chopeira para este pedido?</label>
+                    <select name="id_equipamento">
+                        <option value="">Não, apenas os produtos/bebendas.</option>
                         {% for eq in equipamentos %}
                         <option value="{{ eq[0] }}">{{ eq[1] }}</option>
                         {% endfor %}
                     </select>
-
-                    <button type="submit">Fazer Pedido</button>
-                </form>
-            </div>
-            {% endfor %}
+                </div>
+                <div style="width: 200px;">
+                    <button type="submit" style="background:#00cc66; color:white;">Fechar Pedido Completo</button>
+                </div>
+            </form>
         {% else %}
-            <p style="color: #aaa;">Poxa, nosso estoque acabou! Volte mais tarde.</p>
+            <p style="color: #aaa;">Seu carrinho está vazio. Escolha os produtos gelados abaixo!</p>
         {% endif %}
     </div>
 
     <div class="box">
-        <h3>📦 Meus Pedidos</h3>
-        
+        <h3>🍺 Produtos Disponíveis</h3>
+        <div class="vitrine-grid">
+            {% if produtos %}
+                {% for p in produtos %}
+                <div class="produto-card">
+                    <div>
+                        <img src="{{ url_for('static', filename='midia/' + p.imagem) }}" class="produto-img" alt="{{ p.nome }}" onerror="this.src='{{ url_for('static', filename='midia/default.webp') }}'">
+                        
+                        <strong style="font-size: 1.2em; color: #FF8C00; display:block; margin-bottom:5px;">{{ p.nome }}</strong>
+                        <span style="color: #aaa; font-size: 0.85em; display:block; margin-bottom:5px;">Categoria: {{ p.categoria }}</span>
+                        <span style="font-size: 0.9em; color:#FF8C00; font-weight:bold; display:block; margin-bottom:10px;">Estoque: {{ p.estoque }} un.</span>
+                    </div>
+
+                    <form action="/adicionar_carrinho" method="POST" style="margin: 0;">
+                        <input type="hidden" name="id_produto" value="{{ p.id }}">
+                        <input type="hidden" name="nome_produto" value="{{ p.nome }}">
+                        <input type="hidden" name="preco_produto" value="{{ p.preco }}">
+                        
+                        {% if p.variacoes %}
+                            <label style="font-size:0.8em; color:#aaa; text-align:left; display:block; margin-bottom:2px;">Selecione o Tamanho:</label>
+                            <select name="variacao_escolhida">
+                                {% for v in p.variacoes %}
+                                    <option value="{{ v }}">{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input type="hidden" name="variacao_escolhida" value="Padrão">
+                        {% endif %}
+
+                        <label style="font-size:0.8em; color:#aaa; text-align:left; display:block; margin-bottom:2px;">Quantidade:</label>
+                        <input type="number" name="quantidade" value="1" min="1" max="{{ p.estoque }}">
+                        
+                        <strong style="font-size: 1.3em; color: #00cc66; display:block; margin: 10px 0;">R$ {{ p.preco }}</strong>
+                        <button type="submit">Adicionar ao Carrinho</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #aaa; grid-column: 1/-1;">Poxa, nosso estoque acabou! Volte mais tarde.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="box">
+        <h3>📦 Meus Pedidos Anteriores</h3>
         {% if meus_pedidos %}
         <table>
             <thead>
                 <tr>
                     <th>Nº Pedido</th>
-                    <th>Produto</th>
-                    <th>Chopeira Locada</th>
-                    <th>Qtd</th>
+                    <th>Produtos Comprados</th>
+                    <th>Chopeira Alugada</th>
                     <th>Data da Compra</th>
-                    <th>Status Atual</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 {% for ped in meus_pedidos %}
                 <tr>
                     <td>#{{ ped[0] }}</td>
-                    <td>{{ ped[1] }}</td>
-                    <td>
-                        <strong style="color:#aaa;">{{ ped[5] if ped[5] else 'Nenhuma' }}</strong>
-                    </td>
-                    <td>{{ ped[2] }}x</td>
-                    <td>{{ ped[3].strftime('%d/%m/%Y às %H:%M') }}</td>
-                    <td class="{% if ped[4] == 'pendente' %}status-pendente{% elif ped[4] == 'entregue' %}status-entregue{% else %}status-preparo{% endif %}">
-                        {{ ped[4].upper() }}
+                    <td style="max-width:350px;"><strong>{{ ped[4] }}</strong></td>
+                    <td><span style="color:#aaa;">{{ ped[3] if ped[3] else 'Nenhuma' }}</span></td>
+                    <td>{{ ped[1].strftime('%d/%m/%Y às %H:%M') if ped[1] else '' }}</td>
+                    <td class="{% if ped[2] == 'pendente' %}status-pendente{% elif ped[2] == 'entregue' %}status-entregue{% else %}status-preparo{% endif %}">
+                        {{ ped[2].upper() }}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p style="color: #aaa;">Você ainda não fez nenhum pedido conosco. Que tal pedir um chopp gelado agora?</p>
+        <p style="color: #aaa;">Você ainda não fez nenhum pedido conosco.</p>
         {% endif %}
     </div>
 </body>
