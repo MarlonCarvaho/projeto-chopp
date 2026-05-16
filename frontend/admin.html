@@ -5,254 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - Projeto Chopp</title>
     <style>
-        /* Estilos Gerais - Tema Dark Moderno */
-        body { 
-            background-color: #121212; 
-            color: #ffffff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-        }
-        h1, h3 { color: #FF8C00; }
-        
-        .logout { 
-            float: right; 
-            color: #ff4d4d; 
-            text-decoration: none; 
-            font-weight: bold; 
-            border: 1px solid #ff4d4d;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; margin: 0; }
+        h1, h2, h3 { color: #FF8C00; }
+        .logout { float: right; color: #ff4d4d; text-decoration: none; font-weight: bold; border: 1px solid #ff4d4d; padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
         .logout:hover { background: #ff4d4d; color: white; }
-
-        .box { 
-            background: #1e1e1e; 
-            padding: 25px; 
-            border-radius: 10px; 
-            margin-bottom: 30px; 
-            border: 1px solid #333; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        /* Formulários */
-        input, select { 
-            padding: 12px; 
-            margin: 5px; 
-            background: #2c2c2c; 
-            color: white; 
-            border: 1px solid #444; 
-            border-radius: 5px; 
-            font-size: 14px;
-        }
-        input:focus, select:focus { outline: none; border-color: #FF8C00; }
-
-        .btn { 
-            background: #FF8C00; 
-            border: none; 
-            padding: 12px 20px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            border-radius: 5px; 
-            text-decoration: none; 
-            color: #121212; 
-            display: inline-block;
-            transition: 0.3s;
-        }
-        .btn:hover { background: #e67e00; transform: translateY(-2px); }
-        .btn-sync { background: #00cc66; color: white; }
-        .btn-sync:hover { background: #00994d; }
-
-        /* Tabelas */
+        .box { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px solid #333; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border-bottom: 1px solid #333; padding: 15px; text-align: left; }
-        th { background: #FF8C00; color: #121212; font-weight: bold; text-transform: uppercase; font-size: 12px; }
-        tr:hover { background: #252525; }
-
-        /* Status de Cores */
-        .status-pendente, .status-manutencao { color: #ff4d4d; font-weight: bold; }
-        .status-preparo, .status-uso { color: #FF8C00; font-weight: bold; }
-        .status-entregue, .status-disponivel { color: #00cc66; font-weight: bold; }
-
-        .aviso { 
-            background: #00cc6622; 
-            color: #00cc66; 
-            padding: 15px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            margin-bottom: 20px; 
-            border-left: 6px solid #00cc66; 
-        }
+        th, td { border-bottom: 1px solid #333; padding: 12px; text-align: left; }
+        th { border-bottom: 2px solid #FF8C00; color: #FF8C00; text-transform: uppercase; font-size: 13px; }
+        input, select { padding: 10px; border-radius: 5px; background: #2c2c2c; color: white; border: 1px solid #444; margin-right: 10px; margin-bottom: 10px; }
+        button { background: #FF8C00; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #121212; transition: 0.3s; }
+        button:hover { background: #e67e00; }
+        .btn-sync { background: #00cc66; color: white; float: right; text-decoration: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; }
+        .btn-sync:hover { background: #00994c; }
+        .sucesso { background: #00cc6622; color: #00cc66; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #00cc66; margin-bottom: 20px; }
+        .erro { background: #ff4d4d22; color: #ff4d4d; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #ff4d4d; margin-bottom: 20px; }
+        .form-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
+    <a href="/logout" class="logout">Sair</a>
+    <h1>🍺 Painel do Administrador</h1>
 
-    <a href="/logout" class="logout">Sair do Sistema</a>
-    <h1>Painel Administrativo ⚙️</h1>
-
-    {% if sucesso %} 
-        <div class="aviso">{{ sucesso }}</div> 
-    {% endif %}
+    {% if sucesso %} <div class="sucesso">{{ sucesso }}</div> {% endif %}
+    {% if erro %} <div class="erro">{{ erro }}</div> {% endif %}
 
     <div class="box">
-        <h3>🛒 Gestão de Pedidos (Vendas)</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th>Produto</th>
-                    <th>Chopeira</th>
-                    <th>Qtd</th>
-                    <th>Data</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ped in pedidos %}
-                <tr>
-                    <td>#{{ ped[0] }}</td>
-                    <td>{{ ped[1] }}</td>
-                    <td>{{ ped[2] }}</td>
-                    <td><strong style="color: #aaa;">{{ ped[6] if ped[6] else 'Nenhuma' }}</strong></td>
-                    <td>{{ ped[3] }}x</td>
-                    <td>{{ ped[5].strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td class="{% if ped[4] == 'pendente' %}status-pendente{% elif ped[4] == 'entregue' %}status-entregue{% else %}status-preparo{% endif %}">
-                        {{ ped[4].upper() }}
-                    </td>
-                    <td>
-                        <form action="/atualizar_pedido" method="POST" style="margin: 0; display: flex;">
-                            <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
-                            <select name="status">
-                                <option value="pendente" {% if ped[4] == 'pendente' %}selected{% endif %}>Pendente</option>
-                                <option value="em preparo" {% if ped[4] == 'em preparo' %}selected{% endif %}>Em Preparo</option>
-                                <option value="entregue" {% if ped[4] == 'entregue' %}selected{% endif %}>Entregue</option>
-                            </select>
-                            <button type="submit" class="btn" style="padding: 10px; margin-left: 5px; background: #00cc66; color: white;">✓</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="8" style="text-align: center; color: #aaa;">Aguardando o primeiro pedido...</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="box">
-        <h3>🛠️ Gestão de Equipamentos (Chopeiras)</h3>
+        <a href="/sincronizar_estoque" class="btn-sync">🔄 Sincronizar da Planilha</a>
+        <h2>📦 Estoque de Produtos</h2>
         
-        <form action="/cadastrar_equipamento" method="POST" style="margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-            <input type="text" name="nome" placeholder="Ex: Chopeira Elétrica Memo (Nº 05)" required style="flex: 1; min-width: 250px;">
-            <select name="status">
-                <option value="disponivel">Disponível</option>
-                <option value="em_uso">Em Uso (Alugada)</option>
-                <option value="em_manutencao">Em Manutenção</option>
-            </select>
-            <button type="submit" class="btn">Cadastrar Equipamento</button>
-        </form>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome do Equipamento</th>
-                    <th>Status Atual</th>
-                    <th>Atualizar Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for eq in equipamentos %}
-                <tr>
-                    <td>#{{ eq[0] }}</td>
-                    <td>{{ eq[1] }}</td>
-                    <td class="{% if eq[2] == 'disponivel' %}status-disponivel{% elif eq[2] == 'em_uso' %}status-uso{% else %}status-manutencao{% endif %}">
-                        {% if eq[2] == 'disponivel' %} DISPONÍVEL
-                        {% elif eq[2] == 'em_uso' %} EM USO
-                        {% else %} EM MANUTENÇÃO {% endif %}
-                    </td>
-                    <td>
-                        <form action="/atualizar_equipamento" method="POST" style="margin: 0; display: flex;">
-                            <input type="hidden" name="id_equipamento" value="{{ eq[0] }}">
-                            <select name="status">
-                                <option value="disponivel" {% if eq[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
-                                <option value="em_uso" {% if eq[2] == 'em_uso' %}selected{% endif %}>Em Uso</option>
-                                <option value="em_manutencao" {% if eq[2] == 'em_manutencao' %}selected{% endif %}>Manutenção</option>
-                            </select>
-                            <button type="submit" class="btn" style="padding: 10px; margin-left: 5px; background: #00cc66; color: white;">OK</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>📦 Estoque de Produtos</h3>
-            <a href="/sincronizar_estoque" class="btn btn-sync">🔄 Sincronizar da Planilha</a>
-        </div>
-        
-        <form action="/cadastrar_produto" method="POST" style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px;">
+        <form action="/cadastrar_produto" method="POST" class="form-inline">
             <input type="text" name="nome" placeholder="Nome do Produto" required>
-            <select name="categoria">
+            <select name="categoria" required>
                 <option value="Chopp">Chopp</option>
-                <option value="Gás">Gás (CO2)</option>
                 <option value="Suprimento">Suprimento</option>
+                <option value="Gás">Gás</option>
             </select>
             <input type="number" name="quantidade" placeholder="Qtd" required style="width: 80px;">
-            <input type="text" name="preco" placeholder="Preço (Ex: 450.00)" required style="width: 120px;">
-            <button type="submit" class="btn">Adicionar Produto</button>
+            <input type="text" name="preco" placeholder="Preço (Ex: 45.00)" required style="width: 120px;">
+            
+            <input type="text" name="imagem_url" placeholder="Imagem (ex: chopp.webp)" style="width: 180px;">
+            <input type="text" name="variacao" placeholder="Tamanhos (ex: 30L, 50L)" style="width: 180px;">
+            
+            <button type="submit">Adicionar Produto</button>
         </form>
 
         <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome</th>
-                    <th>Categoria</th>
-                    <th>Quantidade</th>
-                    <th>Preço Unitário</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in produtos %}
-                <tr>
-                    <td>{{ p[0] }}</td>
-                    <td>{{ p[1] }}</td>
-                    <td>{{ p[2] }}</td>
-                    <td><strong>{{ p[3] }}</strong></td>
-                    <td>R$ {{ p[4] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Imagem</th><th>Variações</th></tr>
+            {% for p in produtos %}
+            <tr>
+                <td>{{ p[0] }}</td>
+                <td>{{ p[1] }}</td>
+                <td>{{ p[2] }}</td>
+                <td>{{ p[3] }}</td>
+                <td>R$ {{ p[4] }}</td>
+                <td style="color: #00cc66;">{{ p[5] if p[5] else 'default.webp' }}</td>
+                <td style="color: #aaa;">{{ p[6] if p[6] else '-' }}</td>
+            </tr>
+            {% endfor %}
         </table>
     </div>
 
     <div class="box">
-        <h3>👥 Utilizadores Cadastrados</h3>
+        <h2>⚙️ Equipamentos (Chopeiras)</h2>
+        <form action="/cadastrar_equipamento" method="POST" class="form-inline">
+            <input type="text" name="nome" placeholder="Nome/Modelo da Chopeira" required>
+            <select name="status" required>
+                <option value="disponivel">Disponível</option>
+                <option value="em_uso">Em Uso</option>
+                <option value="manutencao">Manutenção</option>
+            </select>
+            <button type="submit">Adicionar Equipamento</button>
+        </form>
+        
         <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome Completo</th>
-                    <th>E-mail</th>
-                    <th>Nível de Acesso</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in usuarios %}
-                <tr>
-                    <td>{{ u[0] }}</td>
-                    <td>{{ u[1] }}</td>
-                    <td>{{ u[2] }}</td>
-                    <td><span style="text-transform: uppercase; font-size: 0.9em;">{{ u[4] }}</span></td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <tr><th>ID</th><th>Nome</th><th>Status</th><th>Ação</th></tr>
+            {% for e in equipamentos %}
+            <tr>
+                <td>{{ e[0] }}</td>
+                <td>{{ e[1] }}</td>
+                <td>{{ e[2].upper() }}</td>
+                <td>
+                    <form action="/atualizar_equipamento" method="POST" style="margin:0;">
+                        <input type="hidden" name="id_equipamento" value="{{ e[0] }}">
+                        <select name="status" style="margin:0; padding:5px;">
+                            <option value="disponivel" {% if e[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
+                            <option value="em_uso" {% if e[2] == 'em_uso' %}selected{% endif %}>Em Uso</option>
+                            <option value="manutencao" {% if e[2] == 'manutencao' %}selected{% endif %}>Manutenção</option>
+                        </select>
+                        <button type="submit" style="padding: 5px 10px;">Atualizar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="box">
+        <h2>🚚 Gerenciar Pedidos</h2>
+        <table>
+            <tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Qtd</th><th>Variação</th><th>Chopeira</th><th>Data</th><th>Status</th><th>Atualizar</th></tr>
+            {% for ped in pedidos %}
+            <tr>
+                <td>#{{ ped[0] }}</td>
+                <td>{{ ped[1] }}</td>
+                <td>{{ ped[2] }}</td>
+                <td>{{ ped[3] }}x</td>
+                <td style="color: #aaa;">{{ ped[7] if ped[7] else '-' }}</td>
+                <td>{{ ped[6] if ped[6] else 'Nenhuma' }}</td>
+                <td>{{ ped[5].strftime('%d/%m %H:%M') if ped[5] else '' }}</td>
+                <td><strong>{{ ped[4].upper() }}</strong></td>
+                <td>
+                    <form action="/atualizar_pedido" method="POST" style="margin:0;">
+                        <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
+                        <select name="status" style="margin:0; padding:5px;">
+                            <option value="pendente" {% if ped[4] == 'pendente' %}selected{% endif %}>Pendente</option>
+                            <option value="em_preparo" {% if ped[4] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
+                            <option value="entregue" {% if ped[4] == 'entregue' %}selected{% endif %}>Entregue</option>
+                        </select>
+                        <button type="submit" style="padding: 5px 10px;">OK</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="box">
+        <h2>👥 Usuários Cadastrados</h2>
+        <table>
+            <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Tipo</th></tr>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u[0] }}</td>
+                <td>{{ u[1] }}</td>
+                <td>{{ u[2] }}</td>
+                <td>{{ u[5].upper() }}</td>
+            </tr>
+            {% endfor %}
         </table>
     </div>
 
