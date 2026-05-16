@@ -60,7 +60,7 @@ def sincronizar_do_google_para_banco():
             if not linha or len(linha) < 3:
                 continue
             nome_prod = linha[0].strip()
-            qtd_str = linha[2].strip()
+            qtd_str = inline = linha[2].strip()
             if qtd_str.isdigit():
                 nova_qtd = int(qtd_str)
                 cur.execute("UPDATE produto SET quantidade_estoque = %s WHERE nome = %s", (nova_qtd, nome_prod))
@@ -141,18 +141,20 @@ def fazer_login():
         session['nome'] = usuario[1]
         session['tipo_usuario'] = usuario[2]
         session['carrinho'] = [] 
-        return redirect(url_for('painel_admin')) if usuario[2] == 'admin' else redirect(url_for('painel_cliente'))
+        # ATUALIZADO: Admin e Auxiliar entram no mesmo painel de gerenciamento
+        return redirect(url_for('painel_admin')) if usuario[2] in ['admin', 'auxiliar'] else redirect(url_for('painel_cliente'))
     return render_template('login.html', erro="E-mail ou senha incorretos.")
 
-# ----- ÁREA DO ADMINISTRADOR -----
+# ----- ÁREA DE GERENCIAMENTO (ADMIN / AUXILIAR) -----
 @app.route('/painel_admin')
 def painel_admin():
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         sucesso = request.args.get('sucesso')
         erro = request.args.get('erro')
         try:
             conn = get_db_connection()
             cur = conn.cursor()
+            
             cur.execute('SELECT * FROM usuario ORDER BY id_usuario DESC')
             usuarios = cur.fetchall()
             cur.execute('SELECT * FROM produto ORDER BY id_produto DESC')
@@ -170,16 +172,29 @@ def painel_admin():
                 ORDER BY p.id_pedido DESC
             ''')
             pedidos = cur.fetchall()
+            
+            # NOVO: Relatório Financeiro Diário (Calcula soma dos valores de HOJE)
+            cur.execute('''
+                SELECT COALESCE(SUM(ip.quantidade * prod.preco), 0)
+                FROM pedido p
+                JOIN item_pedido ip ON p.id_pedido = ip.id_pedido
+                JOIN produto prod ON ip.id_produto = prod.id_produto
+                WHERE DATE(p.data_pedido) = CURRENT_DATE
+            ''')
+            faturamento_hoje = cur.fetchone()[0]
+            
             cur.close()
             conn.close()
-            return render_template('admin.html', usuarios=usuarios, produtos=produtos, pedidos=pedidos, equipamentos=equipamentos, sucesso=sucesso, erro=erro)
+            return render_template('admin.html', usuarios=usuarios, produtos=produtos, pedidos=pedidos, 
+                                   equipamentos=equipamentos, faturamento_hoje=faturamento_hoje, 
+                                   sucesso=sucesso, erro=erro)
         except Exception as e:
             return f"Erro: {str(e)}"
     return redirect(url_for('tela_login'))
 
 @app.route('/cadastrar_produto', methods=['POST'])
 def cadastrar_produto():
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         nome = request.form['nome']
         categoria = request.form['categoria']
         quantidade = request.form['quantidade']
@@ -190,24 +205,22 @@ def cadastrar_produto():
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute('INSERT INTO produto (nome, categoria, quantidade_estoque, preco, imagem_url, variacao) VALUES (%s, %s, %s, %s, %s, %s)',
-                        (nome, categoria, quantidade, preco, imagem, variacao))
+                        (nome, categoria, quantity = quantidade, preco, imagem, variacao))
             conn.commit()
             cur.close()
             conn.close()
             sincronizar_google_sheets(nome, categoria, quantidade, preco)
-            return redirect(url_for('painel_admin', sucesso="Produto cadastrado!"))
+            return redirect(url_for('painel_admin', sucesso="Produto cadastrado com sucesso!"))
         except Exception as e:
             return redirect(url_for('painel_admin', erro=f"Erro ao cadastrar: {str(e)}"))
     return redirect(url_for('tela_login'))
 
-# NOVA ROTA: Eliminar Produto com Segurança
 @app.route('/deletar_produto/<int:id_produto>', methods=['POST'])
 def deletar_produto(id_produto):
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            # Remove referências do produto nos itens de pedidos para não quebrar a integridade
             cur.execute("DELETE FROM item_pedido WHERE id_produto = %s", (id_produto,))
             cur.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
             conn.commit()
@@ -218,9 +231,26 @@ def deletar_produto(id_produto):
             return redirect(url_for('painel_admin', erro=f"Erro ao eliminar produto: {str(e)}"))
     return redirect(url_for('tela_login'))
 
+# NOVO: Rota para deletar pedido (Exclusivo Admin)
+@app.route('/deletar_pedido/<int:id_pedido>', methods=['POST'])
+def deletar_pedido(id_pedido):
+    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM item_pedido WHERE id_pedido = %s", (id_pedido,))
+            cur.execute("DELETE FROM pedido WHERE id_pedido = %s", (id_pedido,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('painel_admin', sucesso="Pedido excluído com sucesso!"))
+        except Exception as e:
+            return redirect(url_for('painel_admin', erro=f"Erro ao excluir pedido: {str(e)}"))
+    return redirect(url_for('tela_login'))
+
 @app.route('/sincronizar_estoque')
 def sincronizar_estoque():
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         if sincronizar_do_google_para_banco():
             return redirect(url_for('painel_admin', sucesso="Estoque sincronizado!"))
         return redirect(url_for('painel_admin', erro="Falha na sincronização."))
@@ -228,7 +258,7 @@ def sincronizar_estoque():
 
 @app.route('/atualizar_pedido', methods=['POST'])
 def atualizar_pedido():
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         id_pedido = request.form['id_pedido']
         novo_status = request.form['status']
         try:
@@ -245,7 +275,7 @@ def atualizar_pedido():
 
 @app.route('/cadastrar_equipamento', methods=['POST'])
 def cadastrar_equipamento():
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         nome = request.form['nome']
         status = request.form['status']
         try:
@@ -255,14 +285,14 @@ def cadastrar_equipamento():
             conn.commit()
             cur.close()
             conn.close()
-            return redirect(url_for('painel_admin', Guide="Equipamento cadastrado!"))
+            return redirect(url_for('painel_admin', sucesso="Equipamento cadastrado!"))
         except Exception as e:
             return f"Erro: {str(e)}"
     return redirect(url_for('tela_login'))
 
 @app.route('/atualizar_equipamento', methods=['POST'])
 def atualizar_equipamento():
-    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         id_equipamento = request.form['id_equipamento']
         novo_status = request.form['status']
         try:
@@ -278,8 +308,7 @@ def atualizar_equipamento():
     return redirect(url_for('tela_login'))
 
 
-# ----- ÁREA DO CLIENTE COM CARRINHO -----
-# ----- ÁREA DO CLIENTE COM CARRINHO -----
+# ----- ÁREA DO CLIENTE COM CARRINHO E AJAX -----
 @app.route('/painel_cliente')
 def painel_cliente():
     if 'id_usuario' in session:
@@ -315,7 +344,6 @@ def painel_cliente():
             return f"Erro ao carregar loja: {str(e)}"
     return redirect(url_for('tela_login'))
 
-# NOVA ROTA: Responde ao AJAX sem recarregar a tela
 @app.route('/adicionar_carrinho_ajax', methods=['POST'])
 def adicionar_carrinho_ajax():
     if 'id_usuario' not in session: return jsonify({'status': 'erro', 'mensagem': 'Não logado'})
@@ -343,7 +371,6 @@ def adicionar_carrinho_ajax():
     session.modified = True
     return jsonify({'status': 'ok', 'nome_produto': nome_produto})
 
-# NOVA ROTA: A Tela Separada de Checkout
 @app.route('/checkout')
 def checkout():
     if 'id_usuario' not in session: return redirect(url_for('tela_login'))
@@ -363,7 +390,6 @@ def finalizar_pedido():
     id_equipamento = int(id_equipamento) if id_equipamento else None
     tipo_entrega = request.form.get('tipo_entrega')
     endereco_final = request.form.get('endereco_entrega', '').strip() if tipo_entrega == 'entrega' else 'Retirada'
-    # 'pagamento' é recebido aqui mas ainda não tem tabela no banco, serve para lógica futura
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -388,21 +414,23 @@ def finalizar_pedido():
         session.modified = True
         cur.close()
         conn.close()
-        return redirect(url_for('painel_cliente', sucesso="Pedido gerado! Aguarde a liberação."))
+        return redirect(url_for('painel_cliente', sucesso="Pedido gerado com sucesso! Aguarde a liberação."))
     except Exception as e:
         conn.rollback()
         return redirect(url_for('painel_cliente', sucesso=f"Erro: {str(e)}"))
 
-# ----- NOVAS ROTAS ADMIN (GERENCIAR USUÁRIOS) -----
-@app.route('/promover_usuario/<int:id_usuario>', methods=['POST'])
-def promover_usuario(id_usuario):
+# ----- GESTÃO DE CONTAS (EXCLUSIVO ADMIN) -----
+@app.route('/promover_usuario/<int:id_usuario>/<string:cargo>', methods=['POST'])
+def promover_usuario(id_usuario, cargo):
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("UPDATE usuario SET tipo_usuario = 'admin' WHERE id_usuario = %s", (id_usuario,))
-        conn.commit()
-        cur.close()
-        conn.close()
+        if cargo in ['admin', 'auxiliar', 'cliente']:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("UPDATE usuario SET tipo_usuario = %s WHERE id_usuario = %s", (cargo, id_usuario))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('painel_admin', sucesso="Cargo do usuário atualizado!"))
     return redirect(url_for('painel_admin'))
 
 @app.route('/deletar_usuario/<int:id_usuario>', methods=['POST'])
@@ -410,13 +438,13 @@ def deletar_usuario(id_usuario):
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
         conn = get_db_connection()
         cur = conn.cursor()
-        # Apagando em cascata na força bruta para garantir integridade
         cur.execute("DELETE FROM item_pedido WHERE id_pedido IN (SELECT id_pedido FROM pedido WHERE id_usuario = %s)", (id_usuario,))
         cur.execute("DELETE FROM pedido WHERE id_usuario = %s", (id_usuario,))
         cur.execute("DELETE FROM usuario WHERE id_usuario = %s", (id_usuario,))
         conn.commit()
         cur.close()
         conn.close()
+        return redirect(url_for('painel_admin', sucesso="Usuário excluído com sucesso!"))
     return redirect(url_for('painel_admin'))
 
 @app.route('/logout')
