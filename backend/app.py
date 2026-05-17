@@ -2,7 +2,8 @@ from flask import Flask, render_template, jsonify, request, session, redirect, u
 import os
 import psycopg2
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
 import gspread 
 from oauth2client.service_account import ServiceAccountCredentials 
 
@@ -68,7 +69,6 @@ def get_db_connection():
     if db_url: return psycopg2.connect(db_url)
     return psycopg2.connect(host=os.getenv('DB_HOST'), database=os.getenv('DB_NAME'), user=os.getenv('DB_USER'), password=os.getenv('DB_PASSWORD'), port=os.getenv('DB_PORT'))
 
-# ATUALIZADO: A raiz do site agora renderiza o login diretamente!
 @app.route('/')
 @app.route('/login')
 def tela_login(): 
@@ -148,21 +148,56 @@ def painel_admin():
             ''')
             pedidos = cur.fetchall()
             
+            # --- LÓGICA DO NOVO DASHBOARD INTERATIVO ---
             faturamento_hoje = 0
+            total_usuarios = len(usuarios)
+            valor_estoque = 0
+            faturamento_semana = 0
+            total_pedidos_semana = 0
+            labels_grafico = []
+            dados_grafico = []
+
             if session['tipo_usuario'] == 'admin':
+                # Valor financeiro imobilizado no estoque
+                cur.execute('SELECT COALESCE(SUM(quantidade_estoque * preco), 0) FROM produto')
+                valor_estoque = cur.fetchone()[0]
+
+                # Preparando os últimos 7 dias dinamicamente
+                hoje = datetime.today()
+                dias_semana = [(hoje - timedelta(days=i)).strftime('%d/%m') for i in range(6, -1, -1)]
+                vendas_por_dia = {dia: 0.0 for dia in dias_semana}
+
+                # Puxa o faturamento da última semana agrupado por dia
                 cur.execute('''
-                    SELECT COALESCE(SUM(ip.quantidade * prod.preco), 0)
+                    SELECT TO_CHAR(DATE(p.data_pedido), 'DD/MM'), COUNT(DISTINCT p.id_pedido), COALESCE(SUM(ip.quantidade * prod.preco), 0)
                     FROM pedido p
                     JOIN item_pedido ip ON p.id_pedido = ip.id_pedido
                     JOIN produto prod ON ip.id_produto = prod.id_produto
-                    WHERE DATE(p.data_pedido) = CURRENT_DATE
+                    WHERE p.data_pedido >= CURRENT_DATE - INTERVAL '6 days'
+                    GROUP BY DATE(p.data_pedido)
+                    ORDER BY DATE(p.data_pedido)
                 ''')
-                faturamento_hoje = cur.fetchone()[0]
+                dados_semana = cur.fetchall()
+
+                for dia, qtd, fat in dados_semana:
+                    if dia in vendas_por_dia:
+                        vendas_por_dia[dia] = float(fat)
+                        total_pedidos_semana += int(qtd)
+                        faturamento_semana += float(fat)
+
+                labels_grafico = list(vendas_por_dia.keys())
+                dados_grafico = list(vendas_por_dia.values())
+                
+                # Faturamento específico de HOJE (para a caixa principal do admin)
+                faturamento_hoje = vendas_por_dia[hoje.strftime('%d/%m')]
             
             cur.close()
             conn.close()
             return render_template('admin.html', usuarios=usuarios, produtos=produtos, pedidos=pedidos, 
                                    equipamentos=equipamentos, faturamento_hoje=faturamento_hoje, 
+                                   total_usuarios=total_usuarios, valor_estoque=valor_estoque,
+                                   faturamento_semana=faturamento_semana, total_pedidos_semana=total_pedidos_semana,
+                                   labels_grafico=json.dumps(labels_grafico), dados_grafico=json.dumps(dados_grafico),
                                    sucesso=sucesso, erro=erro)
         except Exception as e:
             return f"Erro: {str(e)}"
