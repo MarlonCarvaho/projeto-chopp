@@ -68,10 +68,12 @@ def get_db_connection():
     if db_url: return psycopg2.connect(db_url)
     return psycopg2.connect(host=os.getenv('DB_HOST'), database=os.getenv('DB_NAME'), user=os.getenv('DB_USER'), password=os.getenv('DB_PASSWORD'), port=os.getenv('DB_PORT'))
 
-# ATUALIZADO: Pula a tela inicial e vai pro login
+# ATUALIZADO: A raiz do site agora renderiza o login diretamente!
 @app.route('/')
-def home(): 
-    return redirect(url_for('tela_login'))
+@app.route('/login')
+def tela_login(): 
+    sucesso = request.args.get('sucesso')
+    return render_template('login.html', sucesso=sucesso)
 
 @app.route('/cadastro')
 def tela_cadastro(): return render_template('cadastro.html')
@@ -93,15 +95,8 @@ def cadastrar():
         conn.commit()
         cur.close()
         conn.close()
-        # ATUALIZADO: Redireciona para login ao criar conta
         return redirect(url_for('tela_login', sucesso="Conta criada com sucesso! Faça seu login."))
     except Exception as e: return render_template('cadastro.html', erro=f"Erro: {str(e)}")
-
-# ATUALIZADO: Recebe a mensagem de sucesso da tela de cadastro
-@app.route('/login')
-def tela_login(): 
-    sucesso = request.args.get('sucesso')
-    return render_template('login.html', sucesso=sucesso)
 
 @app.route('/fazer_login', methods=['POST'])
 def fazer_login():
