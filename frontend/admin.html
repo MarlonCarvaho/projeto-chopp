@@ -4,196 +4,302 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - Projeto Chopp</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        h1, h2, h3 { color: #FF8C00; }
-        .logout { float: right; color: #ff4d4d; text-decoration: none; border: 1px solid #ff4d4d; padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
-        .logout:hover { background: #ff4d4d; color: white; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px solid #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border-bottom: 1px solid #333; padding: 12px; text-align: left; }
-        th { border-bottom: 2px solid #FF8C00; color: #FF8C00; text-transform: uppercase; font-size: 13px; }
-        input, select { padding: 10px; border-radius: 5px; background: #2c2c2c; color: white; border: 1px solid #444; margin-right: 10px; margin-bottom: 10px; }
-        button { background: #FF8C00; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #121212; transition: 0.3s; }
-        button:hover { background: #e67e00; }
-        .btn-sync { background: #00cc66; color: white; float: right; text-decoration: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; }
-        .btn-sync:hover { background: #00994c; }
-        .sucesso { background: #00cc6622; color: #00cc66; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #00cc66; margin-bottom: 20px; }
-        .erro { background: #ff4d4d22; color: #ff4d4d; font-weight: bold; padding: 15px; border-radius: 8px; border-left: 5px solid #ff4d4d; margin-bottom: 20px; }
+        :root {
+            --bg-dark: #0f0f13;
+            --bg-panel: #1a1a24;
+            --primary: #8b5cf6; /* Roxo vibrante inspirado na foto */
+            --primary-light: #8b5cf622;
+            --accent: #10b981; /* Verde neon */
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --danger: #ef4444;
+        }
+        body { margin: 0; background-color: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Menu Lateral (Sidebar) */
+        .sidebar { width: 250px; background: var(--bg-panel); display: flex; flex-direction: column; border-right: 1px solid #2d2d3a; }
+        .logo { padding: 25px 20px; font-size: 1.2em; font-weight: bold; color: var(--text); border-bottom: 1px solid #2d2d3a; display: flex; align-items: center; gap: 10px; }
+        .logo i { color: var(--primary); font-size: 1.5em; }
+        .nav-links { flex: 1; padding: 20px 0; display: flex; flex-direction: column; gap: 5px; }
+        .nav-item { padding: 12px 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; border-left: 3px solid transparent; }
+        .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); border-left-color: var(--primary); }
+        .nav-item i { font-size: 1.3em; }
+        .logout { padding: 20px; text-decoration: none; color: var(--danger); display: flex; align-items: center; gap: 10px; border-top: 1px solid #2d2d3a; }
+        .logout:hover { background: #ef444422; }
+
+        /* Conteúdo Principal */
+        .main-content { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 1.8em; font-weight: 500; }
+        .user-badge { background: var(--bg-panel); padding: 8px 15px; border-radius: 20px; border: 1px solid #2d2d3a; display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
+
+        /* Estilos SPA (Ocultar/Mostrar telas) */
+        .tab-pane { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-pane.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Elementos Gerais */
+        .box { background: var(--bg-panel); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #2d2d3a; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; }
+        th, td { border-bottom: 1px solid #2d2d3a; padding: 15px 10px; text-align: left; }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.85em; font-weight: 600; }
+        input, select { padding: 10px 15px; border-radius: 8px; background: var(--bg-dark); color: var(--text); border: 1px solid #374151; margin-right: 10px; margin-bottom: 10px; outline: none; }
+        input:focus, select:focus { border-color: var(--primary); }
+        button { background: var(--primary); border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 8px; color: #fff; transition: 0.3s; }
+        button:hover { background: #7c3aed; }
+        
+        .btn-sync { background: var(--accent); color: white; float: right; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; }
+        .btn-delete { background: var(--danger); padding: 6px 12px; font-size: 0.85em; }
         .form-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-delete:hover { background: #cc3333; }
-        .btn-cargo { background: #00cc66; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 5px; }
-        .btn-aux { background: #00bfff; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .faturamento-box { background: #00cc6622; border: 1px solid #00cc66; color: #00cc66; font-size: 1.8em; font-weight: bold; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: center; }
+        .faturamento-box { background: var(--primary-light); border: 1px solid var(--primary); color: var(--primary); font-size: 1.5em; padding: 20px; border-radius: 12px; margin-bottom: 25px; text-align: center; }
+        .alerta { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; }
+        .alerta.sucesso { background: #10b98122; border-left: 4px solid var(--accent); color: var(--accent); }
+        .alerta.erro { background: #ef444422; border-left: 4px solid var(--danger); color: var(--danger); }
+        
+        /* Mobile menu button (oculto no desktop) */
+        .menu-toggle { display: none; background: none; color: white; font-size: 2em; border: none; cursor: pointer; padding: 0; }
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; left: -250px; z-index: 100; height: 100%; transition: left 0.3s; }
+            .sidebar.open { left: 0; }
+            .menu-toggle { display: block; }
+            .main-content { padding: 15px; }
+            .user-badge { display: none; }
+        }
     </style>
 </head>
 <body>
-    <a href="/logout" class="logout">Sair</a>
-    <h1> Painel de Controle (Logado como: {{ session['tipo_usuario'].upper() }})</h1>
 
-    {% if sucesso %} <div class="sucesso">{{ sucesso }}</div> {% endif %}
-    {% if erro %} <div class="erro">{{ erro }}</div> {% endif %}
-
-    {% if session['tipo_usuario'] == 'admin' %}
-    <div class="faturamento-box">
-        📊 FATURAMENTO DOS PEDIDOS DE HOJE: R$ {{ "%.2f"|format(faturamento_hoje) }}
-    </div>
-    {% endif %}
-
-    <div class="box">
-        <a href="/sincronizar_estoque" class="btn-sync">🔄 Sincronizar da Planilha</a>
-        <h2>📦 Estoque de Produtos</h2>
-        <form action="/cadastrar_produto" method="POST" class="form-inline">
-            <input type="text" name="nome" placeholder="Nome do Produto" required>
-            <select name="categoria" required>
-                <option value="Chopp">Chopp</option>
-                <option value="Suprimento">Suprimento</option>
-                <option value="Gás">Gás</option>
-            </select>
-            <input type="number" name="quantidade" placeholder="Qtd" required style="width: 80px;">
-            <input type="text" name="preco" placeholder="Preço (Ex: 45.00)" required style="width: 120px;">
-            <input type="text" name="imagem_url" placeholder="Imagem (ex: chopp.webp)" style="width: 180px;">
-            <input type="text" name="variacao" placeholder="Tamanhos (ex: 30L, 50L)" style="width: 180px;">
-            <button type="submit">Adicionar Produto</button>
-        </form>
-
-        <table>
-            <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Imagem</th><th>Variações</th><th>Ações</th></tr>
-            {% for p in produtos %}
-            <tr>
-                <td>{{ p[0] }}</td>
-                <td>{{ p[1] }}</td>
-                <td>{{ p[2] }}</td>
-                <td>{{ p[3] }} un.</td>
-                <td>R$ {{ p[4] }}</td>
-                <td style="color: #00cc66;">{{ p[5] }}</td>
-                <td style="color: #aaa;">{{ p[6] if p[6] else '-' }}</td>
-                <td>
-                    <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Eliminar o produto {{ p[1] }}?');">
-                        <button type="submit" class="btn-delete">Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="ph-fill ph-beer-stein"></i> Projeto Chopp
+        </div>
+        <div class="nav-links">
+            <div class="nav-item active" onclick="showTab('tab-dashboard', this)">
+                <i class="ph ph-squares-four"></i> Dashboard
+            </div>
+            <div class="nav-item" onclick="showTab('tab-produtos', this)">
+                <i class="ph ph-package"></i> Produtos
+            </div>
+            <div class="nav-item" onclick="showTab('tab-equipamentos', this)">
+                <i class="ph ph-thermometer"></i> Equipamentos
+            </div>
+            <div class="nav-item" onclick="showTab('tab-pedidos', this)">
+                <i class="ph ph-receipt"></i> Pedidos
+            </div>
+            {% if session['tipo_usuario'] == 'admin' %}
+            <div class="nav-item" onclick="showTab('tab-usuarios', this)">
+                <i class="ph ph-users"></i> Controle Financeiro / Usuários
+            </div>
+            {% endif %}
+        </div>
+        <a href="/logout" class="logout"><i class="ph ph-sign-out"></i> Sair do Sistema</a>
     </div>
 
-    <div class="box">
-        <h2>⚙️ Equipamentos (Chopeiras)</h2>
-        <form action="/cadastrar_equipamento" method="POST" class="form-inline">
-            <input type="text" name="nome" placeholder="Nome/Modelo da Chopeira" required>
-            <select name="status" required>
-                <option value="disponivel">Disponível</option>
-                <option value="em_uso">Em Uso</option>
-                <option value="manutencao">Manutenção</option>
-            </select>
-            <button type="submit">Adicionar Equipamento</button>
-        </form>
-        
-        <table>
-            <tr><th>ID</th><th>Nome</th><th>Status</th><th>Ação</th></tr>
-            {% for e in equipamentos %}
-            <tr>
-                <td>{{ e[0] }}</td>
-                <td>{{ e[1] }}</td>
-                <td>{{ e[2].upper() }}</td>
-                <td>
-                    <form action="/atualizar_equipamento" method="POST" style="margin:0;">
-                        <input type="hidden" name="id_equipamento" value="{{ e[0] }}">
-                        <select name="status" style="margin:0; padding:5px;">
-                            <option value="disponivel" {% if e[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
-                            <option value="em_uso" {% if e[2] == 'em_uso' %}selected{% endif %}>Em Uso</option>
-                            <option value="manutencao" {% if e[2] == 'manutencao' %}selected{% endif %}>Manutenção</option>
-                        </select>
-                        <button type="submit" style="padding: 5px 10px;">Atualizar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
+    <div class="main-content">
+        <div class="header">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <i class="ph ph-list"></i>
+            </button>
+            <h1>Boa tarde, Usuário.</h1>
+            <div class="user-badge">
+                <i class="ph-fill ph-user-circle"></i> {{ session['tipo_usuario'].upper() }}
+            </div>
+        </div>
+
+        {% if sucesso %} <div class="alerta sucesso">{{ sucesso }}</div> {% endif %}
+        {% if erro %} <div class="alerta erro">{{ erro }}</div> {% endif %}
+
+        <div id="tab-dashboard" class="tab-pane active">
+            <div class="box" style="display: flex; gap: 20px; align-items: center;">
+                <i class="ph-fill ph-check-circle" style="font-size: 3em; color: var(--accent);"></i>
+                <div>
+                    <h2 style="margin:0;">Tudo sob controle</h2>
+                    <p style="color: var(--text-muted); margin-top:5px;">Selecione um item no menu lateral para gerenciar seu negócio.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-produtos" class="tab-pane">
+            <div class="box">
+                <a href="/sincronizar_estoque" class="btn-sync"><i class="ph ph-arrows-clockwise"></i> Sincronizar Google Sheets</a>
+                <h2>Estoque de Produtos</h2>
+                <form action="/cadastrar_produto" method="POST" class="form-inline" style="margin-top: 20px;">
+                    <input type="text" name="nome" placeholder="Nome do Produto" required>
+                    <select name="categoria" required>
+                        <option value="Chopp">Chopp</option>
+                        <option value="Suprimento">Suprimento</option>
+                        <option value="Gás">Gás</option>
+                    </select>
+                    <input type="number" name="quantidade" placeholder="Qtd" required style="width: 80px;">
+                    <input type="text" name="preco" placeholder="Preço (Ex: 45.00)" required style="width: 120px;">
+                    <input type="text" name="imagem_url" placeholder="Imagem (ex: chopp.webp)">
+                    <input type="text" name="variacao" placeholder="Tamanhos (ex: 30L, 50L)">
+                    <button type="submit"><i class="ph ph-plus"></i> Adicionar</button>
+                </form>
+
+                <table>
+                    <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Variações</th><th>Ações</th></tr>
+                    {% for p in produtos %}
+                    <tr>
+                        <td>{{ p[0] }}</td>
+                        <td>{{ p[1] }}</td>
+                        <td>{{ p[2] }}</td>
+                        <td>{{ p[3] }} un.</td>
+                        <td>R$ {{ p[4] }}</td>
+                        <td style="color: var(--text-muted);">{{ p[6] if p[6] else '-' }}</td>
+                        <td>
+                            <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Eliminar o produto {{ p[1] }}?');">
+                                <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-equipamentos" class="tab-pane">
+            <div class="box">
+                <h2>Equipamentos e Chopeiras</h2>
+                <form action="/cadastrar_equipamento" method="POST" class="form-inline">
+                    <input type="text" name="nome" placeholder="Nome/Modelo da Chopeira" required>
+                    <select name="status" required>
+                        <option value="disponivel">Disponível</option>
+                        <option value="em_uso">Em Uso</option>
+                        <option value="manutencao">Manutenção</option>
+                    </select>
+                    <button type="submit"><i class="ph ph-plus"></i> Adicionar Equipamento</button>
+                </form>
+                
+                <table>
+                    <tr><th>ID</th><th>Nome</th><th>Status</th><th>Ação</th></tr>
+                    {% for e in equipamentos %}
+                    <tr>
+                        <td>{{ e[0] }}</td>
+                        <td>{{ e[1] }}</td>
+                        <td>{{ e[2].upper() }}</td>
+                        <td>
+                            <form action="/atualizar_equipamento" method="POST" style="margin:0; display:flex; gap:10px;">
+                                <input type="hidden" name="id_equipamento" value="{{ e[0] }}">
+                                <select name="status" style="margin:0; padding:8px;">
+                                    <option value="disponivel" {% if e[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
+                                    <option value="em_uso" {% if e[2] == 'em_uso' %}selected{% endif %}>Em Uso</option>
+                                    <option value="manutencao" {% if e[2] == 'manutencao' %}selected{% endif %}>Manutenção</option>
+                                </select>
+                                <button type="submit" style="padding: 8px 15px;"><i class="ph ph-check"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-pedidos" class="tab-pane">
+            <div class="box">
+                <h2>Gerenciador de Pedidos</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Itens</th><th>Data</th><th>Status</th><th>Mudar Status</th>
+                        {% if session['tipo_usuario'] == 'admin' %} <th>Excluir</th> {% endif %} </tr>
+                        {% for ped in pedidos %}
+                        <tr>
+                            <td>#{{ ped[0] }}</td>
+                            <td>{{ ped[1] }}</td>
+                            <td style="color:var(--accent);">{{ ped[6] }}</td>
+                            <td>{{ ped[2] }}</td>
+                            <td>{{ ped[4].strftime('%d/%m %H:%M') if ped[4] else '' }}</td>
+                            <td style="font-weight:bold;">
+                                {% if ped[3] == 'apto_retirada' %}APTO P/ RETIRADA
+                                {% else %}{{ ped[3].upper() }}{% endif %}
+                            </td>
+                            <td>
+                                <form action="/atualizar_pedido" method="POST" style="margin:0; display:flex; gap:5px;">
+                                    <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
+                                    <select name="status" style="padding:8px; margin:0;">
+                                        <option value="pendente" {% if ped[3] == 'pendente' %}selected{% endif %}>Pendente</option>
+                                        <option value="em_preparo" {% if ped[3] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
+                                        <option value="apto_retirada" {% if ped[3] == 'apto_retirada' %}selected{% endif %}>Retirada</option>
+                                        <option value="entregue" {% if ped[3] == 'entregue' %}selected{% endif %}>Entregue</option>
+                                    </select>
+                                    <button type="submit" style="padding: 8px 10px;"><i class="ph ph-arrow-right"></i></button>
+                                </form>
+                            </td>
+                            {% if session['tipo_usuario'] == 'admin' %}
+                            <td>
+                                <form action="/deletar_pedido/{{ ped[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Excluir este pedido?');">
+                                    <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if session['tipo_usuario'] == 'admin' %}
+        <div id="tab-usuarios" class="tab-pane">
+            <div class="faturamento-box">
+                <i class="ph ph-currency-circle-dollar"></i> Faturamento Hoje: <strong style="color:#fff;">R$ {{ "%.2f"|format(faturamento_hoje) }}</strong>
+            </div>
+            
+            <div class="box">
+                <h2>Controle de Acessos</h2>
+                <table>
+                    <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Cargo Atual</th><th>Promover</th><th>Remover</th></tr>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u[0] }}</td>
+                        <td>{{ u[1] }}</td>
+                        <td>{{ u[2] }}</td>
+                        <td style="font-weight: bold; color: var(--primary);">{{ u[3].upper() }}</td>
+                        <td>
+                            {% if u[3] != 'admin' %}
+                            <form action="/promover_usuario/{{ u[0] }}/admin" method="POST" style="display:inline;">
+                                <button type="submit" style="background:var(--primary); padding: 6px 10px; font-size: 0.85em;">Admin</button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if u[3] != 'auxiliar' %}
+                            <form action="/promover_usuario/{{ u[0] }}/auxiliar" method="POST" style="display:inline;">
+                                <button type="submit" style="background:#3b82f6; padding: 6px 10px; border:none; color:#fff; border-radius:4px; cursor:pointer; font-size: 0.85em;">Auxiliar</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="/deletar_usuario/{{ u[0] }}" method="POST" style="display:inline;" onclick="return confirm('Deseja mesmo excluir o usuário {{ u[1] }}?');">
+                                <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 
-    <div class="box">
-        <h2>🚚 Gerenciar Pedidos</h2>
-        <table>
-            <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Itens</th><th>Data</th><th>Status</th><th>Mudar Status</th>
-            {% if session['tipo_usuario'] == 'admin' %} <th>Remover</th> {% endif %} </tr>
-            {% for ped in pedidos %}
-            <tr>
-                <td>#{{ ped[0] }}</td>
-                <td>{{ ped[1] }}</td>
-                <td style="color:#00cc66;">{{ ped[6] }}</td>
-                <td>{{ ped[2] }}</td>
-                <td>{{ ped[4].strftime('%d/%m %H:%M') if ped[4] else '' }}</td>
-                <td><strong>
-                    {% if ped[3] == 'apto_retirada' %}APTO P/ RETIRADA
-                    {% else %}{{ ped[3].upper() }}{% endif %}
-                </strong></td>
-                <td>
-                    <form action="/atualizar_pedido" method="POST" style="margin:0;">
-                        <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
-                        <select name="status" style="padding:5px; margin:0;">
-                            <option value="pendente" {% if ped[3] == 'pendente' %}selected{% endif %}>Pendente</option>
-                            <option value="em_preparo" {% if ped[3] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
-                            <option value="apto_retirada" {% if ped[3] == 'apto_retirada' %}selected{% endif %}>Apto para Retirada</option>
-                            <option value="entregue" {% if ped[3] == 'entregue' %}selected{% endif %}>Entregue/Retirado</option>
-                        </select>
-                        <button type="submit" style="padding: 5px;">Mudar</button>
-                    </form>
-                </td>
-                {% if session['tipo_usuario'] == 'admin' %}
-                <td>
-                    <form action="/deletar_pedido/{{ ped[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Excluir este pedido definitivamente?');">
-                        <button type="submit" class="btn-delete">Excluir</button>
-                    </form>
-                </td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+    <script>
+        function showTab(tabId, element) {
+            // Esconde todas as telas
+            document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
+            // Tira a cor de seleção de todos os botões do menu
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            // Mostra a tela certa e colore o botão clicado
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
 
-    {% if session['tipo_usuario'] == 'admin' %}
-    <div class="box">
-        <h2>👥 Controle de Usuários e Cargos</h2>
-        <table>
-            <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Cargo Atual</th><th>Alterar Cargo</th><th>Remover Conta</th></tr>
-            {% for u in usuarios %}
-            <tr>
-                <td>{{ u[0] }}</td>
-                <td>{{ u[1] }}</td>
-                <td>{{ u[2] }}</td>
-                <td style="font-weight: bold; color: #00bfff;">{{ u[3].upper() }}</td>
-                <td>
-                    {% if u[3] != 'admin' %}
-                    <form action="/promover_usuario/{{ u[0] }}/admin" method="POST" style="display:inline;">
-                        <button type="submit" class="btn-cargo">Subir p/ Admin</button>
-                    </form>
-                    {% endif %}
-                    
-                    {% if u[3] != 'auxiliar' %}
-                    <form action="/promover_usuario/{{ u[0] }}/auxiliar" method="POST" style="display:inline;">
-                        <button type="submit" class="btn-aux">Subir p/ Auxiliar</button>
-                    </form>
-                    {% endif %}
-                    
-                    {% if u[3] != 'cliente' and u[3] != 'admin' %}
-                    <form action="/promover_usuario/{{ u[0] }}/cliente" method="POST" style="display:inline; margin-left: 5px;">
-                        <button type="submit" style="background:#444; color:white;">Rebaixar a Cliente</button>
-                    </form>
-                    {% endif %}
-                </td>
-                <td>
-                    <form action="/deletar_usuario/{{ u[0] }}" method="POST" style="display:inline;" onclick="return confirm('Deseja mesmo excluir o usuário {{ u[1] }}?');">
-                        <button type="submit" class="btn-delete">Excluir Usuário</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-    {% endif %}
-
+            // No celular, fecha o menu automaticamente ao clicar
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+    </script>
 </body>
 </html>

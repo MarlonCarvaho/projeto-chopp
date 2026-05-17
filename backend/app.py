@@ -50,7 +50,6 @@ def sincronizar_do_google_para_banco():
         for linha in dados_planilha:
             if not linha or len(linha) < 3: continue
             nome_prod = linha[0].strip()
-            # ERRO CORRIGIDO AQUI:
             qtd_str = linha[2].strip()
             if qtd_str.isdigit():
                 cur.execute("UPDATE produto SET quantidade_estoque = %s WHERE nome = %s", (int(qtd_str), nome_prod))
@@ -69,8 +68,10 @@ def get_db_connection():
     if db_url: return psycopg2.connect(db_url)
     return psycopg2.connect(host=os.getenv('DB_HOST'), database=os.getenv('DB_NAME'), user=os.getenv('DB_USER'), password=os.getenv('DB_PASSWORD'), port=os.getenv('DB_PORT'))
 
+# ATUALIZADO: Pula a tela inicial e vai pro login
 @app.route('/')
-def home(): return render_template('index.html')
+def home(): 
+    return redirect(url_for('tela_login'))
 
 @app.route('/cadastro')
 def tela_cadastro(): return render_template('cadastro.html')
@@ -92,11 +93,15 @@ def cadastrar():
         conn.commit()
         cur.close()
         conn.close()
-        return render_template('cadastro.html', sucesso="Cadastro realizado!")
+        # ATUALIZADO: Redireciona para login ao criar conta
+        return redirect(url_for('tela_login', sucesso="Conta criada com sucesso! Faça seu login."))
     except Exception as e: return render_template('cadastro.html', erro=f"Erro: {str(e)}")
 
+# ATUALIZADO: Recebe a mensagem de sucesso da tela de cadastro
 @app.route('/login')
-def tela_login(): return render_template('login.html')
+def tela_login(): 
+    sucesso = request.args.get('sucesso')
+    return render_template('login.html', sucesso=sucesso)
 
 @app.route('/fazer_login', methods=['POST'])
 def fazer_login():
@@ -129,10 +134,8 @@ def painel_admin():
             
             cur.execute('SELECT id_usuario, nome, email, tipo_usuario FROM usuario ORDER BY id_usuario DESC')
             usuarios = cur.fetchall()
-            
             cur.execute('SELECT * FROM produto ORDER BY id_produto DESC')
             produtos = cur.fetchall()
-            
             cur.execute('SELECT * FROM equipamento ORDER BY id_equipamento DESC')
             equipamentos = cur.fetchall()
             
@@ -182,7 +185,6 @@ def cadastrar_produto():
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            # ERRO CORRIGIDO AQUI EMBAIXO: tirei o "quantity ="
             cur.execute('INSERT INTO produto (nome, categoria, quantidade_estoque, preco, imagem_url, variacao) VALUES (%s, %s, %s, %s, %s, %s)',
                         (nome, categoria, quantidade, preco, imagem, variacao))
             conn.commit()
