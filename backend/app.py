@@ -127,6 +127,17 @@ def painel_admin():
             conn = get_db_connection()
             cur = conn.cursor()
             
+            # CRIA A TABELA DE DESPESAS AUTOMATICAMENTE SE ELA NÃO EXISTIR
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS despesa (
+                    id_despesa SERIAL PRIMARY KEY,
+                    descricao VARCHAR(255) NOT NULL,
+                    valor DECIMAL(10,2) NOT NULL,
+                    data_despesa TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            conn.commit()
+            
             cur.execute('SELECT id_usuario, nome, email, tipo_usuario FROM usuario ORDER BY id_usuario DESC')
             usuarios = cur.fetchall()
             cur.execute('SELECT * FROM produto ORDER BY id_produto DESC')
@@ -148,26 +159,41 @@ def painel_admin():
             ''')
             pedidos = cur.fetchall()
             
-            # --- LÓGICA DO NOVO DASHBOARD INTERATIVO ---
+            # --- INTELIGÊNCIA DO DASHBOARD E FINANCEIRO ---
             faturamento_hoje = 0
             total_usuarios = len(usuarios)
             valor_estoque = 0
             faturamento_semana = 0
             total_pedidos_semana = 0
+            receita_total = 0
+            despesa_total = 0
+            lucro_liquido = 0
+            despesas = []
             labels_grafico = []
             dados_grafico = []
 
             if session['tipo_usuario'] == 'admin':
-                # Valor financeiro imobilizado no estoque
+                # Estoque Imobilizado
                 cur.execute('SELECT COALESCE(SUM(quantidade_estoque * preco), 0) FROM produto')
                 valor_estoque = cur.fetchone()[0]
 
-                # Preparando os últimos 7 dias dinamicamente
+                # Financeiro: Receita Total vs Despesas
+                cur.execute("SELECT COALESCE(SUM(ip.quantidade * prod.preco), 0) FROM pedido p JOIN item_pedido ip ON p.id_pedido = ip.id_pedido JOIN produto prod ON ip.id_produto = prod.id_produto")
+                receita_total = float(cur.fetchone()[0])
+                
+                cur.execute("SELECT COALESCE(SUM(valor), 0) FROM despesa")
+                despesa_total = float(cur.fetchone()[0])
+                
+                lucro_liquido = receita_total - despesa_total
+                
+                cur.execute("SELECT * FROM despesa ORDER BY data_despesa DESC")
+                despesas = cur.fetchall()
+
+                # Gráfico Semanal
                 hoje = datetime.today()
                 dias_semana = [(hoje - timedelta(days=i)).strftime('%d/%m') for i in range(6, -1, -1)]
                 vendas_por_dia = {dia: 0.0 for dia in dias_semana}
 
-                # Puxa o faturamento da última semana agrupado por dia
                 cur.execute('''
                     SELECT TO_CHAR(DATE(p.data_pedido), 'DD/MM'), COUNT(DISTINCT p.id_pedido), COALESCE(SUM(ip.quantidade * prod.preco), 0)
                     FROM pedido p
@@ -187,8 +213,6 @@ def painel_admin():
 
                 labels_grafico = list(vendas_por_dia.keys())
                 dados_grafico = list(vendas_por_dia.values())
-                
-                # Faturamento específico de HOJE (para a caixa principal do admin)
                 faturamento_hoje = vendas_por_dia[hoje.strftime('%d/%m')]
             
             cur.close()
@@ -197,6 +221,7 @@ def painel_admin():
                                    equipamentos=equipamentos, faturamento_hoje=faturamento_hoje, 
                                    total_usuarios=total_usuarios, valor_estoque=valor_estoque,
                                    faturamento_semana=faturamento_semana, total_pedidos_semana=total_pedidos_semana,
+                                   receita_total=receita_total, despesa_total=despesa_total, lucro_liquido=lucro_liquido, despesas=despesas,
                                    labels_grafico=json.dumps(labels_grafico), dados_grafico=json.dumps(dados_grafico),
                                    sucesso=sucesso, erro=erro)
         except Exception as e:
@@ -306,6 +331,33 @@ def atualizar_equipamento():
         conn.close()
         return redirect(url_for('painel_admin', sucesso="Status alterado!"))
     return redirect(url_for('tela_login'))
+
+# ----- ROTAS FINANCEIRAS -----
+@app.route('/cadastrar_despesa', methods=['POST'])
+def cadastrar_despesa():
+    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+        descricao = request.form['descricao']
+        valor = request.form['valor']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO despesa (descricao, valor) VALUES (%s, %s)", (descricao, valor))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for('painel_admin', sucesso="Despesa registrada com sucesso!"))
+    return redirect(url_for('painel_admin'))
+
+@app.route('/deletar_despesa/<int:id_despesa>', methods=['POST'])
+def deletar_despesa(id_despesa):
+    if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM despesa WHERE id_despesa = %s", (id_despesa,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for('painel_admin', sucesso="Despesa removida!"))
+    return redirect(url_for('painel_admin'))
 
 # ----- ÁREA DO CLIENTE COM CARRINHO E AJAX -----
 @app.route('/painel_cliente')
