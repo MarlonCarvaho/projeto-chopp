@@ -33,10 +33,12 @@ def atualizar_estoque_google(nome_prod, novo_estoque):
         client = gspread.authorize(creds)
         planilha = client.open("Estoque Chopp").sheet1
         celula = planilha.find(nome_prod)
-        planilha.update_cell(celula.row, 3, novo_estoque)
+        if celula:
+            planilha.update_cell(celula.row, 3, novo_estoque)
         return True
     except Exception as e: return False
 
+# ATUALIZADO: Cadastra novos produtos vindos da Planilha (UPSERT)
 def sincronizar_do_google_para_banco():
     try:
         caminho_json = buscar_caminho_json()
@@ -48,12 +50,24 @@ def sincronizar_do_google_para_banco():
         
         conn = get_db_connection()
         cur = conn.cursor()
-        for linha in dados_planilha:
-            if not linha or len(linha) < 3: continue
+        for i, linha in enumerate(dados_planilha):
+            if i == 0: continue # Pula cabeçalho
+            if not linha or len(linha) < 4: continue
             nome_prod = linha[0].strip()
+            categoria = linha[1].strip()
             qtd_str = linha[2].strip()
+            preco_str = linha[3].strip().replace('R$', '').replace(',', '.').strip()
+            
             if qtd_str.isdigit():
-                cur.execute("UPDATE produto SET quantidade_estoque = %s WHERE nome = %s", (int(qtd_str), nome_prod))
+                qtd = int(qtd_str)
+                preco = float(preco_str) if preco_str else 0.0
+                
+                cur.execute("SELECT id_produto FROM produto WHERE nome = %s", (nome_prod,))
+                existe = cur.fetchone()
+                if existe:
+                    cur.execute("UPDATE produto SET quantidade_estoque = %s, preco = %s, categoria = %s WHERE nome = %s", (qtd, preco, categoria, nome_prod))
+                else:
+                    cur.execute("INSERT INTO produto (nome, categoria, quantidade_estoque, preco, imagem_url) VALUES (%s, %s, %s, %s, 'default.webp')", (nome_prod, categoria, qtd, preco))
         conn.commit()
         cur.close()
         conn.close()
@@ -73,7 +87,8 @@ def get_db_connection():
 @app.route('/login')
 def tela_login(): 
     sucesso = request.args.get('sucesso')
-    return render_template('login.html', sucesso=sucesso)
+    erro = request.args.get('erro')
+    return render_template('login.html', sucesso=sucesso, erro=erro)
 
 @app.route('/cadastro')
 def tela_cadastro(): return render_template('cadastro.html')
@@ -127,7 +142,6 @@ def painel_admin():
             conn = get_db_connection()
             cur = conn.cursor()
             
-            # CRIA A TABELA DE DESPESAS AUTOMATICAMENTE SE ELA NÃO EXISTIR
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS despesa (
                     id_despesa SERIAL PRIMARY KEY,
@@ -135,8 +149,7 @@ def painel_admin():
                     valor DECIMAL(10,2) NOT NULL,
                     data_despesa TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            conn.commit()
+            '''); conn.commit()
             
             cur.execute('SELECT id_usuario, nome, email, tipo_usuario FROM usuario ORDER BY id_usuario DESC')
             usuarios = cur.fetchall()
@@ -159,7 +172,6 @@ def painel_admin():
             ''')
             pedidos = cur.fetchall()
             
-            # --- INTELIGÊNCIA DO DASHBOARD E FINANCEIRO ---
             faturamento_hoje = 0
             total_usuarios = len(usuarios)
             valor_estoque = 0
@@ -169,27 +181,19 @@ def painel_admin():
             despesa_total = 0
             lucro_liquido = 0
             despesas = []
-            labels_grafico = []
-            dados_grafico = []
+            labels_grafico, dados_grafico = [], []
 
             if session['tipo_usuario'] == 'admin':
-                # Estoque Imobilizado
                 cur.execute('SELECT COALESCE(SUM(quantidade_estoque * preco), 0) FROM produto')
                 valor_estoque = cur.fetchone()[0]
-
-                # Financeiro: Receita Total vs Despesas
                 cur.execute("SELECT COALESCE(SUM(ip.quantidade * prod.preco), 0) FROM pedido p JOIN item_pedido ip ON p.id_pedido = ip.id_pedido JOIN produto prod ON ip.id_produto = prod.id_produto")
                 receita_total = float(cur.fetchone()[0])
-                
                 cur.execute("SELECT COALESCE(SUM(valor), 0) FROM despesa")
                 despesa_total = float(cur.fetchone()[0])
-                
                 lucro_liquido = receita_total - despesa_total
-                
                 cur.execute("SELECT * FROM despesa ORDER BY data_despesa DESC")
                 despesas = cur.fetchall()
 
-                # Gráfico Semanal
                 hoje = datetime.today()
                 dias_semana = [(hoje - timedelta(days=i)).strftime('%d/%m') for i in range(6, -1, -1)]
                 vendas_por_dia = {dia: 0.0 for dia in dias_semana}
@@ -251,18 +255,35 @@ def cadastrar_produto():
             return redirect(url_for('painel_admin', erro=f"Erro ao cadastrar: {str(e)}"))
     return redirect(url_for('tela_login'))
 
+# ATUALIZADO: Deletar do Site apaga o produto do Google Sheets automaticamente
 @app.route('/deletar_produto/<int:id_produto>', methods=['POST'])
 def deletar_produto(id_produto):
     if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
         try:
             conn = get_db_connection()
             cur = conn.cursor()
+            cur.execute("SELECT nome FROM produto WHERE id_produto = %s", (id_produto,))
+            prod = cur.fetchone()
+            
+            if prod:
+                nome_prod = prod[0]
+                try:
+                    caminho_json = buscar_caminho_json()
+                    escopo = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+                    creds = ServiceAccountCredentials.from_json_keyfile_name(caminho_json, escopo)
+                    client = gspread.authorize(creds)
+                    planilha = client.open("Estoque Chopp").sheet1
+                    celula = planilha.find(nome_prod)
+                    if celula:
+                        planilha.delete_rows(celula.row)
+                except Exception: pass
+                
             cur.execute("DELETE FROM item_pedido WHERE id_produto = %s", (id_produto,))
             cur.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
             conn.commit()
             cur.close()
             conn.close()
-            return redirect(url_for('painel_admin', sucesso="Produto eliminado!"))
+            return redirect(url_for('painel_admin', sucesso="Produto removido do sistema e da planilha!"))
         except Exception as e:
             return redirect(url_for('painel_admin', erro=f"Erro ao eliminar: {str(e)}"))
     return redirect(url_for('tela_login'))
@@ -286,8 +307,8 @@ def deletar_pedido(id_pedido):
 @app.route('/sincronizar_estoque')
 def sincronizar_estoque():
     if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
-        if sincronizar_do_google_para_banco(): return redirect(url_for('painel_admin', sucesso="Sincronizado!"))
-        return redirect(url_for('painel_admin', erro="Falha."))
+        if sincronizar_do_google_para_banco(): return redirect(url_for('painel_admin', sucesso="Estoque Atualizado via Planilha!"))
+        return redirect(url_for('painel_admin', erro="Falha ao carregar dados."))
     return redirect(url_for('tela_login'))
 
 @app.route('/atualizar_pedido', methods=['POST'])
@@ -332,7 +353,6 @@ def atualizar_equipamento():
         return redirect(url_for('painel_admin', sucesso="Status alterado!"))
     return redirect(url_for('tela_login'))
 
-# ----- ROTAS FINANCEIRAS -----
 @app.route('/cadastrar_despesa', methods=['POST'])
 def cadastrar_despesa():
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
@@ -364,35 +384,58 @@ def deletar_despesa(id_despesa):
 def painel_cliente():
     if 'id_usuario' in session:
         sucesso = request.args.get('sucesso')
+        erro = request.args.get('erro')
         if 'carrinho' not in session: session['carrinho'] = []
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute('SELECT id_produto, nome, categoria, quantidade_estoque, preco, imagem_url, variacao FROM produto WHERE quantidade_estoque > 0 ORDER BY nome ASC')
         produtos = [{'id': p[0], 'nome': p[1], 'categoria': p[2], 'estoque': p[3], 'preco': p[4], 'imagem': p[5], 'variacoes': [v.strip() for v in p[6].split(',')] if p[6] else []} for p in cur.fetchall()]
+        
+        # ATUALIZADO: Puxa os equipamentos livres direto para a vitrine do cliente
+        cur.execute("SELECT id_equipamento, nome FROM equipamento WHERE status = 'disponivel' ORDER BY nome ASC")
+        equipamentos = cur.fetchall()
+        
         cur.execute('''
             SELECT p.id_pedido, p.data_pedido, p.status, e.nome, string_agg(prod.nome || ' (' || COALESCE(ip.variacao_escolhida, 'Padrão') || ') - ' || ip.quantidade || 'x', ', ') as itens, p.endereco_entrega
-            FROM pedido p JOIN item_pedido ip ON p.id_pedido = ip.id_pedido JOIN produto prod ON ip.id_produto = prod.id_produto LEFT JOIN equipamento e ON p.id_equipamento = e.id_equipamento
+            FROM pedido p LEFT JOIN item_pedido ip ON p.id_pedido = ip.id_pedido LEFT JOIN produto prod ON ip.id_produto = prod.id_produto LEFT JOIN equipamento e ON p.id_equipamento = e.id_equipamento
             WHERE p.id_usuario = %s GROUP BY p.id_pedido, p.data_pedido, p.status, e.nome, p.endereco_entrega ORDER BY p.data_pedido DESC
         ''', (session['id_usuario'],))
         meus_pedidos = cur.fetchall()
         cur.close()
         conn.close()
-        return render_template('cliente.html', nome=session['nome'], produtos=produtos, meus_pedidos=meus_pedidos, sucesso=sucesso)
+        return render_template('cliente.html', nome=session['nome'], produtos=produtos, equipamentos=equipamentos, meus_pedidos=meus_pedidos, sucesso=sucesso, erro=erro)
     return redirect(url_for('tela_login'))
 
+# ATUALIZADO: Processa adições normais e adições de Aluguel de Chopeiras
 @app.route('/adicionar_carrinho_ajax', methods=['POST'])
 def adicionar_carrinho_ajax():
     if 'id_usuario' not in session: return jsonify({'status': 'erro'})
-    id_produto, quantidade, variacao, nome_produto, preco_produto = int(request.form['id_produto']), int(request.form['quantidade']), request.form.get('variacao_escolhida', 'Padrão'), request.form['nome_produto'], float(request.form['preco_produto'])
     if 'carrinho' not in session: session['carrinho'] = []
     carrinho = session['carrinho']
-    item_existe = False
-    for item in carrinho:
-        if item['id_produto'] == id_produto and item['variacao'] == variacao:
-            item['quantidade'] += quantidade
-            item_existe = True
-            break
-    if not item_existe: carrinho.append({'id_produto': id_produto, 'nome': nome_produto, 'preco': preco_produto, 'quantidade': quantidade, 'variacao': variacao})
+    
+    is_eq = request.form.get('is_equipamento') == 'true'
+    if is_eq:
+        id_eq = int(request.form['id_equipamento'])
+        nome_eq = request.form['nome_equipamento']
+        preco_eq = float(request.form['preco_equipamento'])
+        
+        item_existe = False
+        for item in carrinho:
+            if item.get('id_equipamento') == id_eq:
+                item_existe = True; break
+        if not item_existe:
+            carrinho.append({'id_produto': None, 'id_equipamento': id_eq, 'nome': "Aluguel: " + nome_eq, 'preco': preco_eq, 'quantidade': 1, 'variacao': 'Equipamento'})
+        return jsonify({'status': 'ok', 'nome_produto': nome_eq})
+    else:
+        id_produto, quantidade, variacao, nome_produto, preco_produto = int(request.form['id_produto']), int(request.form['quantidade']), request.form.get('variacao_escolhida', 'Padrão'), request.form['nome_produto'], float(request.form['preco_produto'])
+        item_existe = False
+        for item in carrinho:
+            if item.get('id_produto') == id_produto and item.get('variacao') == variacao:
+                item['quantidade'] += quantidade
+                item_existe = True; break
+        if not item_existe: 
+            carrinho.append({'id_produto': id_produto, 'id_equipamento': None, 'nome': nome_produto, 'preco': preco_produto, 'quantidade': quantity = quantidade, 'variacao': variacao})
+            
     session['carrinho'] = carrinho
     session.modified = True
     return jsonify({'status': 'ok', 'nome_produto': nome_produto})
@@ -400,50 +443,65 @@ def adicionar_carrinho_ajax():
 @app.route('/checkout')
 def checkout():
     if 'id_usuario' not in session: return redirect(url_for('tela_login'))
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM equipamento WHERE status = 'disponivel'")
-    equipamentos = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('checkout.html', carrinho=session.get('carrinho', []), equipamentos=equipamentos)
+    return render_template('checkout.html', carrinho=session.get('carrinho', []))
 
+# ATUALIZADO: Captura a chopeira do carrinho se ela foi selecionada na área de vendas
 @app.route('/finalizar_pedido', methods=['POST'])
 def finalizar_pedido():
     if 'id_usuario' not in session or not session.get('carrinho'): return redirect(url_for('painel_cliente'))
-    id_eq = request.form.get('id_equipamento')
-    endereco = request.form.get('endereco_entrega', '').strip() if request.form.get('tipo_entrega') == 'entrega' else 'Retirada'
+    tipo_entrega = request.form.get('tipo_entrega')
+    endereco = request.form.get('endereco_entrega', '').strip() if tipo_entrega == 'entrega' else 'Retirada'
+    
+    id_eq_final = None
+    for item in session['carrinho']:
+        if item.get('id_equipamento'):
+            id_eq_final = item['id_equipamento']; break
+            
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status, id_equipamento) VALUES (%s, %s, %s, %s) RETURNING id_pedido", (session['id_usuario'], endereco, 'pendente', int(id_eq) if id_eq else None))
+        cur.execute("INSERT INTO pedido (id_usuario, endereco_entrega, status, id_equipamento) VALUES (%s, %s, %s, %s) RETURNING id_pedido", (session['id_usuario'], endereco, 'pendente', id_eq_final))
         id_pedido = cur.fetchone()[0]
-        if id_eq: cur.execute("UPDATE equipamento SET status = 'em_uso' WHERE id_equipamento = %s", (id_eq,))
+        if id_eq_final: 
+            cur.execute("UPDATE equipamento SET status = 'em_uso' WHERE id_equipamento = %s", (id_eq_final,))
         for item in session['carrinho']:
-            cur.execute("INSERT INTO item_pedido (id_pedido, id_produto, quantidade, variacao_escolhida) VALUES (%s, %s, %s, %s)", (id_pedido, item['id_produto'], item['quantidade'], item['variacao']))
-            cur.execute("UPDATE produto SET quantidade_estoque = quantidade_estoque - %s WHERE id_produto = %s RETURNING quantidade_estoque", (item['quantidade'], item['id_produto']))
-            atualizar_estoque_google(item['nome'], cur.fetchone()[0])
+            if item.get('id_produto'):
+                cur.execute("INSERT INTO item_pedido (id_pedido, id_produto, quantidade, variacao_escolhida) VALUES (%s, %s, %s, %s)", (id_pedido, item['id_produto'], item['quantidade'], item['variacao']))
+                cur.execute("UPDATE produto SET quantidade_estoque = quantidade_estoque - %s WHERE id_produto = %s RETURNING quantidade_estoque", (item['quantidade'], item['id_produto']))
+                atualizar_estoque_google(item['nome'], cur.fetchone()[0])
         conn.commit()
-        session['carrinho'] = [] 
+        session['carrinho'] = []
         session.modified = True
         return redirect(url_for('painel_cliente', sucesso="Pedido gerado!"))
     except Exception as e:
         conn.rollback()
         return redirect(url_for('painel_cliente', erro=f"Erro: {str(e)}"))
     finally:
-        cur.close()
-        conn.close()
+        cur.close(); conn.close()
 
-# ----- GESTÃO DE CONTAS (EXCLUSIVO ADMIN) -----
+# ----- GESTÃO DE CONTAS (TRAVA EXCLUSIVA DE SEGURANÇA: MÁXIMO 3 ADMINS, MÍNIMO 1) -----
 @app.route('/promover_usuario/<int:id_usuario>/<string:cargo>', methods=['POST'])
 def promover_usuario(id_usuario, cargo):
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin' and cargo in ['admin', 'auxiliar', 'cliente']:
         conn = get_db_connection()
         cur = conn.cursor()
+        
+        cur.execute("SELECT COUNT(*) FROM usuario WHERE tipo_usuario = 'admin'")
+        total_admins = cur.fetchone()[0]
+        cur.execute("SELECT tipo_usuario FROM usuario WHERE id_usuario = %s", (id_usuario,))
+        cargo_atual = cur.fetchone()[0]
+        
+        if cargo == 'admin' and total_admins >= 3:
+            cur.close(); conn.close()
+            return redirect(url_for('painel_admin', erro="Segurança: O sistema aceita no máximo 3 administradores ativos!"))
+            
+        if cargo_atual == 'admin' and cargo != 'admin' and total_admins <= 1:
+            cur.close(); conn.close()
+            return redirect(url_for('painel_admin', erro="Ação Bloqueada: Não é possível rebaixar o único administrador do sistema!"))
+            
         cur.execute("UPDATE usuario SET tipo_usuario = %s WHERE id_usuario = %s", (cargo, id_usuario))
         conn.commit()
-        cur.close()
-        conn.close()
+        cur.close(); conn.close()
         return redirect(url_for('painel_admin', sucesso="Cargo do usuário atualizado!"))
     return redirect(url_for('painel_admin'))
 
@@ -452,12 +510,20 @@ def deletar_usuario(id_usuario):
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin':
         conn = get_db_connection()
         cur = conn.cursor()
+        cur.execute("SELECT tipo_usuario FROM usuario WHERE id_usuario = %s", (id_usuario,))
+        cargo_atual = cur.fetchone()[0]
+        
+        if cargo_atual == 'admin':
+            cur.execute("SELECT COUNT(*) FROM usuario WHERE tipo_usuario = 'admin'")
+            if cur.fetchone()[0] <= 1:
+                cur.close(); conn.close()
+                return redirect(url_for('painel_admin', erro="Ação Bloqueada: Não é permitido excluir o único administrador ativo!"))
+                
         cur.execute("DELETE FROM item_pedido WHERE id_pedido IN (SELECT id_pedido FROM pedido WHERE id_usuario = %s)", (id_usuario,))
         cur.execute("DELETE FROM pedido WHERE id_usuario = %s", (id_usuario,))
         cur.execute("DELETE FROM usuario WHERE id_usuario = %s", (id_usuario,))
         conn.commit()
-        cur.close()
-        conn.close()
+        cur.close(); conn.close()
         return redirect(url_for('painel_admin', sucesso="Usuário excluído!"))
     return redirect(url_for('painel_admin'))
 

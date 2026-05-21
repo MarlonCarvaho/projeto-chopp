@@ -7,83 +7,57 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         * { box-sizing: border-box; }
-        
         :root { 
-            --bg-dark: #0f0f13; 
-            --bg-panel: #1a1a24; 
-            --primary: #FF8C00; 
-            --primary-light: rgba(255, 140, 0, 0.15);
-            --accent: #00cc66; 
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
+            --bg-dark: #0f0f13; --bg-panel: #1a1a24; --primary: #FF8C00; 
+            --primary-light: rgba(255, 140, 0, 0.15); --accent: #00cc66; 
+            --text: #f3f4f6; --text-muted: #9ca3af;
         }
+        body { background-color: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 0 0 40px 0; margin: 0; overflow-x: hidden; width: 100%; position: relative;}
         
-        body { background-color: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 0 0 40px 0; margin: 0; overflow-x: hidden; width: 100%; }
-        
-        /* NAVBAR FIXA */
-        .navbar { background: var(--bg-panel); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #2d2d3a; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .navbar { background: var(--bg-panel); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #2d2d3a; }
         .logo { color: var(--primary); font-size: 1.5em; font-weight: bold; display: flex; align-items: center; gap: 8px; margin: 0; }
         .nav-actions { display: flex; gap: 10px; }
-        .btn-checkout { background: var(--accent); color: white; text-decoration: none; font-weight: bold; padding: 10px 15px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
-        .btn-checkout:hover { background: #00994c; }
-        .logout { color: #ef4444; background: #ef444422; text-decoration: none; padding: 10px; border-radius: 8px; display: flex; align-items: center; transition: 0.3s; }
-        .logout:hover { background: #ef4444; color: white; }
+        .btn-checkout { background: var(--accent); color: white; text-decoration: none; font-weight: bold; padding: 10px 15px; border-radius: 8px; display: flex; align-items: center; gap: 8px; }
+        .logout { color: #ef4444; background: #ef444422; text-decoration: none; padding: 10px; border-radius: 8px; display: flex; align-items: center; }
 
-        /* HERO BANNER COM DEGRADÊ */
-        .hero { background: linear-gradient(135deg, rgba(255, 140, 0, 0.2) 0%, rgba(15, 15, 19, 1) 100%); padding: 40px 20px; text-align: center; border-bottom: 1px solid #2d2d3a; }
-        .hero h2 { margin: 0 0 10px 0; font-size: 2em; color: #fff; }
-        .hero p { margin: 0; color: var(--text-muted); font-size: 1.1em; }
+        .hero { background: linear-gradient(135deg, rgba(255, 140, 0, 0.15) 0%, rgba(15, 15, 19, 1) 100%); padding: 40px 20px; text-align: center; border-bottom: 1px solid #2d2d3a; }
+        .hero h2 { margin: 0; font-size: 1.8em; }
+        .hero p { margin: 5px 0 0 0; color: var(--text-muted); }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; width: 100%; overflow-x: hidden;}
         
-        /* FILTROS ESTILO IFOOD */
         .filtros { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
-        .filtros::-webkit-scrollbar { height: 4px; }
-        .filtros::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        .btn-filter { background: var(--bg-panel); color: var(--text-muted); border: 1px solid #333; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.3s; }
+        .btn-filter { background: var(--bg-panel); color: var(--text-muted); border: 1px solid #333; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; white-space: nowrap; }
         .btn-filter.active { background: var(--primary); color: #121212; border-color: var(--primary); }
 
-        /* VITRINE DE PRODUTOS */
         .vitrine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; }
-        .produto-card { background: var(--bg-panel); padding: 20px; border-radius: 16px; border: 1px solid #2d2d3a; display: flex; flex-direction: column; transition: transform 0.3s, box-shadow 0.3s; position: relative; overflow: hidden; }
-        .produto-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); border-color: #444; }
-        .badge-cat { position: absolute; top: 15px; right: 15px; background: var(--primary-light); color: var(--primary); font-size: 0.75em; padding: 4px 10px; border-radius: 12px; font-weight: bold; text-transform: uppercase; }
-        .produto-img { width: 100%; height: 160px; object-fit: contain; margin-bottom: 15px; transition: 0.3s; }
-        .produto-card:hover .produto-img { transform: scale(1.05); }
-        .prod-title { color: #fff; font-size: 1.2em; margin: 0 0 5px 0; }
-        .prod-estoque { color: var(--text-muted); font-size: 0.85em; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+        .produto-card { background: var(--bg-panel); padding: 20px; border-radius: 16px; border: 1px solid #2d2d3a; display: flex; flex-direction: column; position: relative; }
+        .badge-cat { position: absolute; top: 15px; right: 15px; background: var(--primary-light); color: var(--primary); font-size: 0.75em; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
+        .produto-img { width: 100%; height: 160px; object-fit: contain; margin-bottom: 15px; }
         
-        /* FORMULÁRIO DENTRO DO CARD */
         .compra-form { margin-top: auto; display: flex; flex-direction: column; gap: 10px; background: #121212; padding: 15px; border-radius: 12px; }
-        .compra-form select, .compra-form input { padding: 10px; background: var(--bg-panel); color: white; border: 1px solid #333; border-radius: 8px; width: 100%; font-family: inherit; outline: none;}
-        .compra-form select:focus, .compra-form input:focus { border-color: var(--primary); }
+        .compra-form select, .compra-form input { padding: 10px; background: var(--bg-panel); color: white; border: 1px solid #333; border-radius: 8px; width: 100%; outline: none; }
         .preco-area { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         .preco { color: var(--accent); font-size: 1.4em; font-weight: bold; }
-        button.btn-add { background: var(--primary); border: none; padding: 10px; cursor: pointer; border-radius: 8px; color: #121212; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 5px; font-weight: bold;}
-        button.btn-add:hover { background: #e67e00; }
+        button.btn-add { background: var(--primary); border: none; padding: 10px 15px; cursor: pointer; border-radius: 8px; color: #121212; font-weight: bold; display: flex; align-items: center; }
 
-        /* PEDIDOS EM CARDS (ADEUS TABELA!) */
-        .section-title { margin: 40px 0 20px 0; color: #fff; display: flex; align-items: center; gap: 10px; font-size: 1.5em; }
-        .pedidos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        /* SEÇÃO DE EQUIPAMENTOS NA VITRINE PRINCIPAL */
+        .equipamento-section { background: rgba(255, 140, 0, 0.05); border: 1px solid var(--primary); padding: 20px; border-radius: 16px; margin-bottom: 30px; }
+
+        .pedidos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; width: 100%; }
         .pedido-card { background: var(--bg-panel); border: 1px solid #2d2d3a; border-radius: 12px; padding: 20px; }
         .ped-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 15px; }
-        .ped-id { font-weight: bold; color: var(--text-muted); font-size: 0.9em; }
         .ped-status { font-size: 0.8em; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
         .status-pendente { background: #ef444422; color: #ef4444; }
         .status-preparo { background: var(--primary-light); color: var(--primary); }
         .status-entregue, .status-apto { background: #10b98122; color: var(--accent); }
         
-        .ped-body p { margin: 0 0 8px 0; font-size: 0.95em; color: var(--text); display: flex; align-items: flex-start; gap: 8px; }
-        .ped-body i { color: var(--primary); margin-top: 3px; }
-
-        #toast { visibility: hidden; min-width: 250px; background-color: var(--accent); color: #121212; text-align: center; border-radius: 12px; padding: 15px; position: fixed; z-index: 1000; bottom: 30px; left: 50%; transform: translateX(-50%); font-weight: bold; opacity: 0; transition: opacity 0.4s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,204,102,0.3);}
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--accent); color: #121212; text-align: center; border-radius: 12px; padding: 15px; position: fixed; z-index: 1000; bottom: 30px; left: 50%; transform: translateX(-50%); font-weight: bold; opacity: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
         #toast.show { visibility: visible; opacity: 1; }
 
         @media (max-width: 768px) {
-            .vitrine-grid { grid-template-columns: 1fr; }
-            .pedidos-grid { grid-template-columns: 1fr; }
-            .hero { padding: 30px 15px; }
-            .hero h2 { font-size: 1.6em; }
+            .vitrine-grid, .pedidos-grid { grid-template-columns: 1fr; }
+            .container { padding: 10px; }
         }
     </style>
 </head>
@@ -92,27 +66,48 @@
     <div class="navbar">
         <h1 class="logo"><i class="ph-fill ph-storefront"></i> Choperia</h1>
         <div class="nav-actions">
-            <a href="/checkout" class="btn-checkout"><i class="ph-bold ph-shopping-cart"></i> <span class="hide-mobile">Carrinho</span></a>
-            <a href="/logout" class="logout" title="Sair"><i class="ph-bold ph-sign-out"></i></a>
+            <a href="/checkout" class="btn-checkout"><i class="ph-bold ph-shopping-cart"></i> Ver Carrinho</a>
+            <a href="/logout" class="logout"><i class="ph-bold ph-sign-out"></i></a>
         </div>
     </div>
 
     <div class="hero">
-        <h2>Olá, {{ nome.split()[0] }}! 🍻</h2>
-        <p>O melhor chopp da região, gelado e direto na sua porta.</p>
+        <h2>Bem-vindo de volta! 🍻</h2>
+        <p>Monte o seu pedido completo e acompanhe em tempo real.</p>
     </div>
 
     <div class="container">
-        {% if sucesso %} 
-        <div style="color:var(--accent); padding:15px; background: #00cc6622; border-radius: 12px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px; border: 1px solid var(--accent);">
-            <i class="ph-fill ph-check-circle" style="font-size: 1.5em;"></i> {{ sucesso }}
-        </div> 
-        {% endif %}
+        {% if sucesso %} <div style="color:var(--accent); padding:15px; background: #10b98111; border: 1px solid var(--accent); border-radius:12px; margin-bottom:20px;">{{ sucesso }}</div> {% endif %}
+
+        <div class="equipamento-section">
+            <h3 style="margin-top:0; color:var(--primary);"><i class="ph ph-thermometer"></i> Precisa de Chopeira para o Evento?</h3>
+            <p style="color:var(--text-muted); font-size:0.9em;">Selecione uma de nossas chopeiras disponíveis no estoque e configure o valor:</p>
+            {% if equipamentos %}
+            <form onsubmit="adicionarChopviaAjax(event, this)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; align-items:end;">
+                <input type="hidden" name="is_equipment" value="true">
+                <div>
+                    <label style="font-size:0.85em; color:var(--text-muted);">Escolha o Modelo:</label>
+                    <select name="id_equipamento" id="eq_select" required style="padding:10px; background:var(--bg-dark); color:white; border:1px solid #444; border-radius:8px; width:100%; margin-top:5px;">
+                        {% for eq in equipamentos %}
+                        <option value="{{ eq[0] }}">{{ eq[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.85em; color:var(--text-muted);">Definir Valor do Aluguel (R$):</label>
+                    <input type="number" step="0.01" name="preco_equipamento" value="50.00" required style="padding:10px; background:var(--bg-dark); color:white; border:1px solid #444; border-radius:8px; width:100%; margin-top:5px;">
+                </div>
+                <button type="submit" style="background:var(--primary); color:#121212; font-weight:bold; padding:12px; border:none; border-radius:8px; cursor:pointer;"><i class="ph ph-plus-bold"></i> Incluir Chopeira</button>
+            </form>
+            {% else %}
+            <p style="color:var(--danger); font-weight:bold; margin:0;">Todas as nossas chopeiras estão alugadas no momento! ⚠️</p>
+            {% endif %}
+        </div>
 
         <div class="filtros">
-            <button class="btn-filter active" onclick="filtrar('Todos', this)">Todos os Itens</button>
-            <button class="btn-filter" onclick="filtrar('Chopp', this)">Chopps</button>
-            <button class="btn-filter" onclick="filtrar('Suprimento', this)">Copos & Cia</button>
+            <button class="btn-filter active" onclick="filtrar('Todos', this)">Todos</button>
+            <button class="btn-filter" onclick="filtrar('Chopp', this)">Chopp</button>
+            <button class="btn-filter" onclick="filtrar('Suprimento', this)">Copos e Acessórios</button>
             <button class="btn-filter" onclick="filtrar('Gás', this)">Gás</button>
         </div>
 
@@ -121,103 +116,87 @@
             <div class="produto-card" data-categoria="{{ p.categoria }}">
                 <span class="badge-cat">{{ p.categoria }}</span>
                 <img src="{{ url_for('static', filename='midia/' + p.imagem) }}" class="produto-img" onerror="this.src='{{ url_for('static', filename='midia/default.webp') }}'">
-                
-                <h3 class="prod-title">{{ p.nome }}</h3>
-                <span class="prod-estoque"><i class="ph-fill ph-package"></i> Restam {{ p.estoque }} un.</span>
+                <h3 style="margin:0 0 5px 0;">{{ p.nome }}</h3>
+                <span style="font-size:0.85em; color:var(--text-muted);"><i class="ph ph-archive"></i> Estoque: {{ p.estoque }}</span>
                 
                 <form class="compra-form" onsubmit="adicionarViaAjax(event, this)">
                     <input type="hidden" name="id_produto" value="{{ p.id }}">
                     <input type="hidden" name="nome_produto" value="{{ p.nome }}">
                     <input type="hidden" name="preco_produto" value="{{ p.preco }}">
                     
-                    <div style="display:flex; gap:10px;">
-                        {% if p.variacoes %}
-                            <select name="variacao_escolhida" style="flex: 2;">
-                                {% for v in p.variacoes %} <option value="{{ v }}">{{ v }}</option> {% endfor %}
-                            </select>
-                        {% else %}
-                            <input type="hidden" name="variacao_escolhida" value="Padrão">
-                        {% endif %}
-                        <input type="number" name="quantidade" value="1" min="1" max="{{ p.estoque }}" style="flex: 1; text-align: center;">
-                    </div>
+                    {% if p.variacoes %}
+                        <select name="variacao_escolhida">
+                            {% for v in p.variacoes %} <option value="{{ v }}">{{ v }}</option> {% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="hidden" name="variacao_escolhida" value="Padrão">
+                    {% endif %}
+                    <input type="number" name="quantidade" value="1" min="1" max="{{ p.estoque }}">
                     
                     <div class="preco-area">
                         <span class="preco">R$ {{ p.preco }}</span>
-                        <button type="submit" class="btn-add"><i class="ph-bold ph-plus"></i></button>
+                        <button type="submit" class="btn-add"><i class="ph ph-plus-bold"></i></button>
                     </div>
                 </form>
             </div>
             {% endfor %}
         </div>
 
-        <h2 class="section-title"><i class="ph-fill ph-clock-counter-clockwise"></i> Meus Pedidos</h2>
-        {% if meus_pedidos %}
+        <h2 style="color:#fff; margin:40px 0 20px 0;"><i class="ph ph-clock"></i> Histórico de Pedidos</h2>
         <div class="pedidos-grid">
             {% for ped in meus_pedidos %}
             <div class="pedido-card">
                 <div class="ped-header">
-                    <span class="ped-id">Pedido #{{ ped[0] }}</span>
+                    <span style="font-weight:bold;">Pedido #{{ ped[0] }}</span>
                     <span class="ped-status 
                         {% if ped[2] == 'pendente' %}status-pendente
                         {% elif ped[2] == 'entregue' %}status-entregue
                         {% elif ped[2] == 'apto_retirada' %}status-apto
                         {% else %}status-preparo{% endif %}">
-                        {% if ped[2] == 'apto_retirada' %}APTO PARA RETIRADA
-                        {% else %}{{ ped[2].replace('_', ' ').upper() }}{% endif %}
+                        {% if ped[2] == 'apto_retirada' %}APTO PARA RETIRADA{% else %}{{ ped[2].replace('_', ' ').upper() }}{% endif %}
                     </span>
                 </div>
-                <div class="ped-body">
-                    <p><i class="ph-fill ph-beer-stein"></i> <span>{{ ped[4] }}</span></p>
-                    <p><i class="ph-fill ph-map-pin"></i> <span>{{ ped[5] }}</span></p>
-                    <p><i class="ph-fill ph-calendar-blank"></i> <span>{{ ped[1].strftime('%d/%m às %H:%M') if ped[1] else '' }}</span></p>
-                </div>
+                <p style="font-size:0.9em; margin:0 0 5px 0;"><i class="ph ph-beer-stein" style="color:var(--primary);"></i> {{ ped[3] }}</p>
+                <p style="font-size:0.9em; margin:0 0 5px 0;"><i class="ph ph-map-pin" style="color:var(--primary);"></i> Destino: {{ ped[5] }}</p>
+                <p style="font-size:0.85em; color:var(--text-muted); margin:0;"><i class="ph ph-calendar"></i> {{ ped[1].strftime('%d/%m %H:%M') if ped[1] else '' }}</p>
             </div>
             {% endfor %}
         </div>
-        {% else %}
-        <p style="color: var(--text-muted); text-align: center; padding: 20px;">Você ainda não fez nenhum pedido conosco.</p>
-        {% endif %}
     </div>
 
-    <div id="toast"><i class="ph-bold ph-shopping-bag"></i> <span id="toast-msg"></span></div>
+    <div id="toast"><i class="ph ph-shopping-bag-bold"></i> <span id="toast-msg"></span></div>
 
     <script>
-        // Lógica de Filtros Dinâmicos
-        function filtrar(categoria, btn) {
-            // Atualiza cor do botão
+        function filtrar(cat, btn) {
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
-            // Filtra os cards
-            const cards = document.querySelectorAll('.produto-card');
-            cards.forEach(card => {
-                if (categoria === 'Todos' || card.getAttribute('data-categoria') === categoria) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+            document.querySelectorAll('.produto-card').forEach(card => {
+                card.style.display = (cat === 'Todos' || card.getAttribute('data-categoria') === cat) ? 'flex' : 'none';
             });
         }
 
-        // Adicionar ao Carrinho via AJAX
-        function adicionarViaAjax(event, form) {
-            event.preventDefault(); 
-            let formData = new FormData(form);
-            
-            fetch('/adicionar_carrinho_ajax', { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    mostrarToast(data.nome_produto + " adicionado ao carrinho!");
-                }
-            })
+        function adicionarViaAjax(e, form) {
+            e.preventDefault();
+            fetch('/adicionar_carrinho_ajax', { method: 'POST', body: new FormData(form) })
+            .then(r => r.json()).then(d => { if(d.status === 'ok') mostrarToast(d.nome_produto + " adicionado!"); });
         }
 
-        function mostrarToast(mensagem) {
-            let toast = document.getElementById("toast");
-            document.getElementById("toast-msg").innerText = mensagem;
-            toast.className = "show";
-            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        function adicionarChopviaAjax(e, form) {
+            e.preventDefault();
+            let fd = new FormData(form);
+            let sel = document.getElementById('eq_select');
+            fd.append('is_equipamento', 'true');
+            fd.append('nome_equipamento', sel.options[sel.selectedIndex].text);
+            
+            fetch('/adicionar_carrinho_ajax', { method: 'POST', body: fd })
+            .then(r => r.json()).then(d => { if(d.status === 'ok') mostrarToast("Chopeira incluída no carrinho!"); });
+        }
+
+        function mostrarToast(msg) {
+            let t = document.getElementById("toast");
+            document.getElementById("toast-msg").innerText = msg;
+            t.className = "show";
+            setTimeout(() => { t.className = ""; }, 3000);
         }
     </script>
 </body>

@@ -8,13 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; }
-        
         :root {
             --bg-dark: #121212; --bg-panel: #1e1e1e; --primary: #FF8C00; 
             --primary-light: rgba(255, 140, 0, 0.15); --accent: #00cc66; 
             --text: #f3f4f6; --text-muted: #9ca3af; --danger: #ef4444;
         }
-        
         body { margin: 0; background-color: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow-x: hidden; width: 100%; }
         
         .sidebar { width: 250px; background: var(--bg-panel); display: flex; flex-direction: column; border-right: 1px solid #2d2d3a; flex-shrink: 0; }
@@ -22,52 +20,60 @@
         .nav-links { flex: 1; padding: 20px 0; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; }
         .nav-item { padding: 12px 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; border-left: 3px solid transparent; }
         .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); border-left-color: var(--primary); }
-        .logout { padding: 20px; text-decoration: none; color: var(--danger); display: flex; align-items: center; gap: 10px; border-top: 1px solid #2d2d3a; transition: 0.3s; }
-        .logout:hover { background: #ef444422; }
+        .logout { padding: 20px; text-decoration: none; color: var(--danger); display: flex; align-items: center; gap: 10px; border-top: 1px solid #2d2d3a; }
 
-        .main-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 30px; position: relative; width: 100%; }
+        .main-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 30px; width: 100%; position: relative; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .header h1 { margin: 0; font-size: 1.5em; font-weight: 500; }
         .user-badge { background: var(--bg-dark); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: var(--primary); font-weight: bold; }
 
-        .tab-pane { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-pane { display: none; }
         .tab-pane.active { display: block; width: 100%; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .box { background: var(--bg-panel); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); width: 100%; }
+        .box { background: var(--bg-panel); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); width: 100%; }
         h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 8px;}
         
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; min-width: 700px; }
+        /* ATUALIZADO: Responsividade absoluta de tabelas */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 750px; }
         th, td { border-bottom: 1px solid #333; padding: 12px 10px; text-align: left; }
-        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.85em; font-weight: 600; white-space: nowrap; }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.85em; font-weight: 600; }
         
-        input, select, textarea { padding: 10px 15px; border-radius: 8px; background: var(--bg-dark); color: var(--text); border: 1px solid #444; margin-bottom: 10px; outline: none; width: 100%; font-family: 'Segoe UI', sans-serif;}
+        input, select, textarea { padding: 10px 15px; border-radius: 8px; background: var(--bg-dark); color: var(--text); border: 1px solid #444; margin-bottom: 10px; outline: none; width: 100%; font-family: inherit; }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); }
-        button { background: var(--primary); border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 8px; color: #121212; transition: 0.3s; }
+        button { background: var(--primary); border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 8px; color: #121212; }
         
         .btn-sync { background: var(--accent); color: white; float: right; text-decoration: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 0.9em; }
-        .btn-delete { background: var(--danger); color: white; padding: 6px 12px; font-size: 0.85em; }
+        .btn-delete { background: var(--danger); color: white; padding: 6px 12px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer;}
         .form-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: center; margin-top: 15px; }
         
         .dash-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; gap: 10px; border-top: 3px solid var(--primary); }
+        .kpi-card { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; border-top: 3px solid var(--primary); }
         .kpi-card h4 { margin: 0; color: var(--text-muted); font-size: 0.9em; text-transform: uppercase; }
-        .kpi-card .valor { font-size: 1.8em; font-weight: bold; color: var(--text); }
+        .kpi-card .valor { font-size: 1.8em; font-weight: bold; margin-top: 5px; }
         .kpi-card.green { border-top-color: var(--accent); }
         
-        .dash-middle { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .chart-container { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; height: 350px; }
-        .notes-container { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; }
-        .notes-area { flex: 1; resize: none; background: transparent; border: 1px dashed #444; color: var(--primary); font-size: 1.1em; line-height: 1.5; }
+        /* ATUALIZADO: Gráficos e finanças não quebram em telas pequenas */
+        .dash-middle { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; width: 100%; }
+        .chart-container { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; height: 350px; min-width: 0; position: relative; }
+        .notes-container { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; min-width: 0; }
+        .notes-area { flex: 1; resize: none; background: transparent; border: 1px dashed #444; color: var(--primary); font-size: 1.1em; }
         
-        .dot { height: 10px; width: 10px; background-color: var(--accent); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; margin-left: 5px;}
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .dot { height: 10px; width: 10px; background-color: var(--accent); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; margin-left: 5px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .alerta { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .alerta.sucesso { background: #00cc6622; border-left: 4px solid var(--accent); color: var(--accent); }
+        .alerta.erro { background: #ef444422; border-left: 4px solid var(--danger); color: var(--danger); }
         
         .menu-toggle { display: none; background: none; color: white; font-size: 2em; border: none; cursor: pointer; padding: 0; margin-right: 15px; }
         
+        @media (max-width: 992px) {
+            .dash-middle { grid-template-columns: 1fr; }
+            .chart-container { height: 300px; }
+        }
         @media (max-width: 768px) {
-            .sidebar { position: fixed; left: -250px; z-index: 1000; height: 100%; transition: left 0.3s; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+            .sidebar { position: fixed; left: -250px; z-index: 1000; height: 100%; transition: left 0.3s; }
             .sidebar.open { left: 0; }
             .menu-toggle { display: block; }
             .main-content { padding: 15px; }
@@ -75,7 +81,6 @@
             .user-badge { display: none; }
             .btn-sync { float: none; display: block; text-align: center; margin-bottom: 15px; }
             .form-inline { grid-template-columns: 1fr; }
-            .dash-middle { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -100,65 +105,62 @@
         <div class="header">
             <div style="display:flex; align-items:center;">
                 <button class="menu-toggle" onclick="event.stopPropagation(); document.getElementById('sidebar').classList.toggle('open')"><i class="ph ph-list"></i></button>
-                <h1>Painel de Controle</h1>
+                <h1>Painel de Gerenciamento</h1>
             </div>
             <div class="user-badge"><i class="ph-fill ph-user-circle"></i> {{ session['tipo_usuario'].upper() }}</div>
         </div>
 
+        {% if sucesso %} <div class="alerta sucesso">{{ sucesso }}</div> {% endif %}
+        {% if erro %} <div class="alerta erro">{{ erro }}</div> {% endif %}
+
         <div id="tab-dashboard" class="tab-pane active">
             {% if session['tipo_usuario'] == 'admin' %}
-            
             <div class="dash-cards">
                 <div class="kpi-card">
-                    <h4><i class="ph ph-users"></i> Contas Ativas</h4>
-                    <div class="valor">{{ total_usuarios }} <span class="dot" title="Usuários Ativos"></span></div>
+                    <h4><i class="ph ph-users"></i> Usuários Registrados</h4>
+                    <div class="valor">{{ total_usuarios }} <span class="dot"></span></div>
                 </div>
                 <div class="kpi-card">
-                    <h4><i class="ph ph-shopping-bag"></i> Vendas (7 Dias)</h4>
+                    <h4><i class="ph ph-shopping-bag"></i> Pedidos (Semana)</h4>
                     <div class="valor">{{ total_pedidos_semana }}</div>
                 </div>
                 <div class="kpi-card green">
-                    <h4><i class="ph ph-trend-up"></i> Receita (7 Dias)</h4>
+                    <h4><i class="ph ph-trend-up"></i> Faturamento (Semana)</h4>
                     <div class="valor" style="color:var(--accent);">R$ {{ "%.2f"|format(faturamento_semana) }}</div>
                 </div>
                 <div class="kpi-card">
-                    <h4><i class="ph ph-archive-box"></i> Valor em Estoque</h4>
+                    <h4><i class="ph ph-archive-box"></i> Custos em Estoque</h4>
                     <div class="valor">R$ {{ "%.2f"|format(valor_estoque) }}</div>
                 </div>
             </div>
 
             <div class="dash-middle">
                 <div class="chart-container">
-                    <h4 style="margin:0 0 15px 0; color:var(--text-muted);"><i class="ph ph-chart-line-up"></i> Desempenho Diário (Semana)</h4>
+                    <h4 style="margin:0 0 15px 0; color:var(--text-muted);"><i class="ph ph-chart-line-up"></i> Gráfico de Desempenho</h4>
                     <canvas id="vendasChart"></canvas>
                 </div>
                 <div class="notes-container">
-                    <h4 style="margin:0 0 15px 0; color:var(--text-muted);"><i class="ph ph-notepad"></i> Bloco de Anotações</h4>
-                    <textarea id="adminNotes" class="notes-area" placeholder="Digite suas notas aqui... Elas ficam salvas no navegador automaticamente."></textarea>
+                    <h4 style="margin:0 0 15px 0; color:var(--text-muted);"><i class="ph ph-notepad"></i> Bloco de Notas Interno</h4>
+                    <textarea id="adminNotes" class="notes-area" placeholder="Suas anotações corporativas..."></textarea>
                 </div>
             </div>
-
             {% else %}
-            <div class="box" style="display: flex; gap: 20px; align-items: center; border-left: 4px solid var(--primary);">
-                <i class="ph-fill ph-shield-check" style="font-size: 3em; color: var(--accent);"></i>
-                <div>
-                    <h2 style="margin:0; color: var(--text);">Acesso de Auxiliar</h2>
-                    <p style="color: var(--text-muted); margin-top:5px;">Você está logado como auxiliar. Selecione um item no menu para operar o sistema.</p>
-                </div>
+            <div class="box" style="border-left: 4px solid var(--primary);">
+                <h2>Acesso nível Auxiliar liberado!</h2>
+                <p style="color:var(--text-muted);">Use as abas de Produtos, Equipamentos e Pedidos localizadas no menu lateral.</p>
             </div>
             {% endif %}
         </div>
 
         {% if session['tipo_usuario'] == 'admin' %}
         <div id="tab-financeiro" class="tab-pane">
-            
             <div class="dash-cards">
                 <div class="kpi-card green">
-                    <h4><i class="ph ph-trend-up"></i> Receita Total (Vendas)</h4>
+                    <h4><i class="ph ph-trend-up"></i> Entradas Totais</h4>
                     <div class="valor" style="color:var(--accent);">R$ {{ "%.2f"|format(receita_total) }}</div>
                 </div>
                 <div class="kpi-card" style="border-top-color: var(--danger);">
-                    <h4><i class="ph ph-trend-down"></i> Despesas Operacionais</h4>
+                    <h4><i class="ph ph-trend-down"></i> Saídas Consolidadas</h4>
                     <div class="valor" style="color:var(--danger);">R$ {{ "%.2f"|format(despesa_total) }}</div>
                 </div>
                 <div class="kpi-card" style="border-top-color: #3b82f6;">
@@ -168,34 +170,29 @@
             </div>
 
             <div class="dash-middle">
-                <div class="box" style="margin-bottom:0;">
-                    <h2><i class="ph ph-minus-circle"></i> Lançar Despesa</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9em;">Registre gastos com fornecedores, manutenções, etc.</p>
-                    <form action="/cadastrar_despesa" method="POST" style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
-                        <input type="text" name="descricao" placeholder="Descrição (Ex: Compra de 2 Barris, Manutenção)" required>
-                        <input type="number" step="0.01" name="valor" placeholder="Valor (Ex: 150.00)" required>
-                        <button type="submit" style="background:var(--danger); color:white;"><i class="ph ph-plus"></i> Registrar Saída</button>
+                <div class="box">
+                    <h2>Lançar Nova Despesa</h2>
+                    <form action="/cadastrar_despesa" method="POST" style="margin-top:15px;">
+                        <input type="text" name="descricao" placeholder="Motivo do Gasto (Ex: Barris de Chopp)" required>
+                        <input type="number" step="0.01" name="valor" placeholder="Valor Pago (R$)" required>
+                        <button type="submit" style="background:var(--danger); color:white; width:100%;">Salvar Lançamento</button>
                     </form>
                 </div>
-                
-                <div class="box" style="margin-bottom:0;">
-                    <h2><i class="ph ph-list-dashes"></i> Histórico de Saídas</h2>
-                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <div class="box">
+                    <h2>Histórico do Livro Caixa</h2>
+                    <div class="table-responsive">
                         <table>
                             <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Ação</th></tr>
                             {% for d in despesas %}
                             <tr>
-                                <td>{{ d[3].strftime('%d/%m/%Y') }}</td>
-                                <td>{{ d[1] }}</td>
+                                <td>{{ d[3].strftime('%d/%m/%Y') }}</td><td>{{ d[1] }}</td>
                                 <td style="color: var(--danger); font-weight: bold;">R$ {{ "%.2f"|format(d[2]) }}</td>
                                 <td>
-                                    <form action="/deletar_despesa/{{ d[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Remover esta despesa?');">
-                                        <button type="submit" class="btn-delete" style="padding:6px;"><i class="ph ph-trash"></i></button>
+                                    <form action="/deletar_despesa/{{ d[0] }}" method="POST" style="margin:0;">
+                                        <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
                                     </form>
                                 </td>
                             </tr>
-                            {% else %}
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhuma despesa registrada.</td></tr>
                             {% endfor %}
                         </table>
                     </div>
@@ -206,10 +203,10 @@
 
         <div id="tab-produtos" class="tab-pane">
             <div class="box">
-                <a href="/sincronizar_estoque" class="btn-sync"><i class="ph ph-arrows-clockwise"></i> Sincronizar Estoque</a>
-                <h2><i class="ph ph-package"></i> Estoque de Produtos</h2>
+                <a href="/sincronizar_estoque" class="btn-sync"><i class="ph ph-arrows-clockwise"></i> Sincronizar Planilha</a>
+                <h2>Estoque Geral</h2>
                 <form action="/cadastrar_produto" method="POST" class="form-inline">
-                    <input type="text" name="nome" placeholder="Nome do Produto" required>
+                    <input type="text" name="nome" placeholder="Nome" required>
                     <select name="categoria" required>
                         <option value="Chopp">Chopp</option>
                         <option value="Suprimento">Suprimento</option>
@@ -217,20 +214,19 @@
                     </select>
                     <input type="number" name="quantidade" placeholder="Qtd" required>
                     <input type="text" name="preco" placeholder="Preço" required>
-                    <input type="text" name="imagem_url" placeholder="Imagem (ex: chopp.webp)">
-                    <input type="text" name="variacao" placeholder="Tamanhos (ex: 30L)">
-                    <button type="submit"><i class="ph ph-plus"></i> Adicionar</button>
+                    <input type="text" name="imagem_url" placeholder="Imagem (ex: canuto.webp)">
+                    <input type="text" name="variacao" placeholder="Variações">
+                    <button type="submit">Cadastrar</button>
                 </form>
 
                 <div class="table-responsive">
                     <table>
-                        <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Variações</th><th>Ações</th></tr>
+                        <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Estoque</th><th>Preço</th><th>Variações</th><th>Excluir</th></tr>
                         {% for p in produtos %}
                         <tr>
-                            <td>{{ p[0] }}</td><td>{{ p[1] }}</td><td>{{ p[2] }}</td><td>{{ p[3] }} un.</td>
-                            <td>R$ {{ p[4] }}</td><td style="color: var(--text-muted);">{{ p[6] if p[6] else '-' }}</td>
+                            <td>{{ p[0] }}</td><td>{{ p[1] }}</td><td>{{ p[2] }}</td><td>{{ p[3] }} un.</td><td>R$ {{ p[4] }}</td><td>{{ p[6] if p[6] else '-' }}</td>
                             <td>
-                                <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Eliminar o produto {{ p[1] }}?');">
+                                <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Isso removerá dos servidores e do Google Sheets. Continuar?');">
                                     <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
                                 </form>
                             </td>
@@ -243,32 +239,32 @@
 
         <div id="tab-equipamentos" class="tab-pane">
             <div class="box">
-                <h2><i class="ph ph-thermometer"></i> Equipamentos e Chopeiras</h2>
+                <h2>Controle de Frota de Chopeiras</h2>
                 <form action="/cadastrar_equipamento" method="POST" class="form-inline">
-                    <input type="text" name="nome" placeholder="Nome/Modelo da Chopeira" required>
+                    <input type="text" name="nome" placeholder="Modelo/Identificação" required>
                     <select name="status" required>
                         <option value="disponivel">Disponível</option>
                         <option value="em_uso">Em Uso</option>
                         <option value="manutencao">Manutenção</option>
                     </select>
-                    <button type="submit"><i class="ph ph-plus"></i> Adicionar Equipamento</button>
+                    <button type="submit">Salvar Máquina</button>
                 </form>
                 
                 <div class="table-responsive">
                     <table>
-                        <tr><th>ID</th><th>Nome</th><th>Status</th><th>Ação</th></tr>
+                        <tr><th>ID</th><th>Identificação</th><th>Status Atual</th><th>Alterar Estado</th></tr>
                         {% for e in equipamentos %}
                         <tr>
                             <td>{{ e[0] }}</td><td>{{ e[1] }}</td><td>{{ e[2].upper() }}</td>
                             <td>
                                 <form action="/atualizar_equipamento" method="POST" style="margin:0; display:flex; gap:10px;">
                                     <input type="hidden" name="id_equipamento" value="{{ e[0] }}">
-                                    <select name="status" style="margin:0;">
+                                    <select name="status" style="margin:0; padding:5px;">
                                         <option value="disponivel" {% if e[2] == 'disponivel' %}selected{% endif %}>Disponível</option>
                                         <option value="em_uso" {% if e[2] == 'em_uso' %}selected{% endif %}>Em Uso</option>
                                         <option value="manutencao" {% if e[2] == 'manutencao' %}selected{% endif %}>Manutenção</option>
                                     </select>
-                                    <button type="submit" style="padding: 10px;"><i class="ph ph-check"></i></button>
+                                    <button type="submit" style="padding:5px 10px;"><i class="ph ph-check"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -280,37 +276,27 @@
 
         <div id="tab-pedidos" class="tab-pane">
             <div class="box">
-                <h2><i class="ph ph-receipt"></i> Gerenciador de Pedidos</h2>
+                <h2>Relação Geral de Pedidos</h2>
                 <div class="table-responsive">
                     <table>
-                        <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Itens</th><th>Data</th><th>Status</th><th>Mudar Status</th>
-                        {% if session['tipo_usuario'] == 'admin' %} <th>Excluir</th> {% endif %} </tr>
+                        <tr><th>ID</th><th>Cliente</th><th>Endereço</th><th>Produtos</th><th>Data</th><th>Status</th><th>Ações</th></tr>
                         {% for ped in pedidos %}
                         <tr>
-                            <td>#{{ ped[0] }}</td><td>{{ ped[1] }}</td><td style="color:var(--accent);">{{ ped[6] }}</td>
-                            <td>{{ ped[2] }}</td><td>{{ ped[4].strftime('%d/%m %H:%M') if ped[4] else '' }}</td>
-                            <td style="font-weight:bold;">
-                                {% if ped[3] == 'apto_retirada' %}APTO P/ RETIRADA{% else %}{{ ped[3].upper() }}{% endif %}
-                            </td>
+                            <td>#{{ ped[0] }}</td><td>{{ ped[1] }}</td><td style="color:var(--accent);">{{ ped[6] }}</td><td>{{ ped[2] }}</td>
+                            <td>{{ ped[4].strftime('%d/%m %H:%M') if ped[4] else '' }}</td>
+                            <td><strong>{% if ped[3] == 'apto_retirada' %}APTO P/ RETIRADA{% else %}{{ ped[3].upper() }}{% endif %}</strong></td>
                             <td>
                                 <form action="/atualizar_pedido" method="POST" style="margin:0; display:flex; gap:5px;">
                                     <input type="hidden" name="id_pedido" value="{{ ped[0] }}">
-                                    <select name="status" style="margin:0;">
+                                    <select name="status" style="padding:5px; margin:0;">
                                         <option value="pendente" {% if ped[3] == 'pendente' %}selected{% endif %}>Pendente</option>
                                         <option value="em_preparo" {% if ped[3] == 'em_preparo' %}selected{% endif %}>Em Preparo</option>
-                                        <option value="apto_retirada" {% if ped[3] == 'apto_retirada' %}selected{% endif %}>Retirada</option>
-                                        <option value="entregue" {% if ped[3] == 'entregue' %}selected{% endif %}>Entregue</option>
+                                        <option value="apto_retirada" {% if ped[3] == 'apto_retirada' %}selected{% endif %}>Apto p/ Retirada</option>
+                                        <option value="entregue" {% if ped[3] == 'entregue' %}selected{% endif %}>Finalizado</option>
                                     </select>
-                                    <button type="submit" style="padding: 10px;"><i class="ph ph-arrow-right"></i></button>
+                                    <button type="submit" style="padding:5px;"><i class="ph ph-arrow-right"></i></button>
                                 </form>
                             </td>
-                            {% if session['tipo_usuario'] == 'admin' %}
-                            <td>
-                                <form action="/deletar_pedido/{{ ped[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Excluir este pedido?');">
-                                    <button type="submit" class="btn-delete" style="padding:10px;"><i class="ph ph-trash"></i></button>
-                                </form>
-                            </td>
-                            {% endif %}
                         </tr>
                         {% endfor %}
                     </table>
@@ -321,10 +307,10 @@
         {% if session['tipo_usuario'] == 'admin' %}
         <div id="tab-usuarios" class="tab-pane">
             <div class="box">
-                <h2><i class="ph ph-users"></i> Gestão de Contas</h2>
+                <h2>Acessos Corporativos (Limite de 3 Admins)</h2>
                 <div class="table-responsive">
                     <table>
-                        <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Promover</th><th>Remover</th></tr>
+                        <tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Promover/Modificar</th><th>Remover</th></tr>
                         {% for u in usuarios %}
                         <tr>
                             <td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td>
@@ -333,19 +319,24 @@
                                 <div style="display:flex; gap:5px;">
                                     {% if u[3] != 'admin' %}
                                     <form action="/promover_usuario/{{ u[0] }}/admin" method="POST" style="margin:0;">
-                                        <button type="submit" style="padding: 8px; font-size: 0.8em;">Admin</button>
+                                        <button type="submit" style="padding: 6px 10px; font-size: 0.85em;">Tornar Admin</button>
                                     </form>
                                     {% endif %}
                                     {% if u[3] != 'auxiliar' %}
                                     <form action="/promover_usuario/{{ u[0] }}/auxiliar" method="POST" style="margin:0;">
-                                        <button type="submit" style="background:#444; color:#fff; padding: 8px; font-size: 0.8em;">Auxiliar</button>
+                                        <button type="submit" style="background:#444; color:#fff; padding: 6px 10px; font-size: 0.85em; border:none; border-radius:8px; cursor:pointer;">Tornar Auxiliar</button>
+                                    </form>
+                                    {% endif %}
+                                    {% if u[3] == 'admin' or u[3] == 'auxiliar' %}
+                                    <form action="/promover_usuario/{{ u[0] }}/cliente" method="POST" style="margin:0;">
+                                        <button type="submit" style="background:#222; color:#aaa; padding: 6px 10px; font-size: 0.85em; border:none; border-radius:8px; cursor:pointer;">Cliente</button>
                                     </form>
                                     {% endif %}
                                 </div>
                             </td>
                             <td>
-                                <form action="/deletar_usuario/{{ u[0] }}" method="POST" style="margin:0;" onclick="return confirm('Deseja mesmo excluir?');">
-                                    <button type="submit" class="btn-delete" style="padding:8px;"><i class="ph ph-trash"></i></button>
+                                <form action="/deletar_usuario/{{ u[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Excluir totalmente este usuário?');">
+                                    <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -371,28 +362,21 @@
         {% if session['tipo_usuario'] == 'admin' %}
         const notesArea = document.getElementById('adminNotes');
         notesArea.value = localStorage.getItem('choppNotes') || '';
-        notesArea.addEventListener('input', () => {
-            localStorage.setItem('choppNotes', notesArea.value);
-        });
+        notesArea.addEventListener('input', () => { localStorage.setItem('choppNotes', notesArea.value); });
 
         const ctx = document.getElementById('vendasChart').getContext('2d');
-        const chartLabels = {{ labels_grafico | safe }};
-        const chartData = {{ dados_grafico | safe }};
-        
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: chartLabels,
+                labels: {{ labels_grafico | safe }},
                 datasets: [{
-                    label: 'Faturamento (R$)',
-                    data: chartData,
+                    data: {{ dados_grafico | safe }},
                     borderColor: '#FF8C00',
-                    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+                    backgroundColor: 'rgba(255, 140, 0, 0.1)',
                     borderWidth: 3,
                     pointBackgroundColor: '#00cc66',
-                    pointRadius: 5,
                     fill: true,
-                    tension: 0.3 
+                    tension: 0.2
                 }]
             },
             options: {
@@ -400,8 +384,8 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#333' }, ticks: { color: '#9ca3af' } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    y: { beginAtZero: true, grid: { color: '#2c2c2c' } },
+                    x: { grid: { display: false } }
                 }
             }
         });

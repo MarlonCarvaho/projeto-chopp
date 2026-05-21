@@ -2,82 +2,73 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Projeto Chopp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Checkout - Concluir Compra</title>
     <style>
-        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        h1, h2, h3 { color: #FF8C00; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; }
+        * { box-sizing: border-box; }
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; overflow-x: hidden; width: 100%; }
+        h1, h3 { color: #FF8C00; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; width: 100%; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border-bottom: 1px solid #333; padding: 12px; text-align: left; }
-        th { border-bottom: 2px solid #FF8C00; color: #FF8C00; text-transform: uppercase; font-size: 13px; }
-        .total-box { font-size: 1.5em; color: #00cc66; text-align: right; font-weight: bold; padding: 10px; }
-        input[type="text"], select { padding: 10px; background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 5px; width: 100%; box-sizing: border-box; margin-top: 5px; }
-        .radio-group { margin: 15px 0; background: #2c2c2c; padding: 15px; border-radius: 5px; }
-        .radio-group label { margin-right: 20px; cursor: pointer; font-size: 1.1em; }
-        button { background: #00cc66; color: white; border: none; padding: 15px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; width: 100%; font-size: 1.2em; transition: 0.3s; }
+        th, td { border-bottom: 1px solid #333; padding: 12px 10px; text-align: left; }
+        th { color: #FF8C00; text-transform: uppercase; font-size: 12px; }
+        .total-box { font-size: 1.4em; color: #00cc66; text-align: right; font-weight: bold; }
+        input[type="text"], select { padding: 12px; background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 8px; width: 100%; margin-top: 5px; }
+        .radio-group { margin: 15px 0; background: #2c2c2c; padding: 15px; border-radius: 8px; }
+        .radio-group label { margin-right: 20px; cursor: pointer; }
+        button { background: #00cc66; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 8px; width: 100%; font-size: 1.1em; transition: 0.3s; }
         button:hover { background: #00994c; }
-        .btn-voltar { display: inline-block; background: #444; color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; margin-bottom: 20px; }
+        .btn-voltar { display: inline-block; background: #333; color: white; text-decoration: none; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; }
     </style>
 </head>
 <body>
-    <a href="/painel_cliente" class="btn-voltar">⬅ Voltar para a Loja</a>
-    <h1>💳 Finalizar Pedido</h1>
+    <a href="/painel_cliente" class="btn-voltar">⬅ Voltar à Vitrine</a>
+    <h1>Finalizar Pedido</h1>
 
     <div class="box">
-        <h3>Resumo do Carrinho</h3>
+        <h3>Resumo dos Itens Selecionados</h3>
         {% if carrinho %}
             <table>
-                <tr><th>Produto</th><th>Variação</th><th>Qtd</th><th>Subtotal</th></tr>
+                <tr><th>Item / Configuração</th><th>Qtd</th><th>Subtotal</th></tr>
                 {% set total = namespace(valor=0) %}
                 {% for item in carrinho %}
                     {% set subtotal = item.preco * item.quantidade %}
                     {% set total.valor = total.valor + subtotal %}
                 <tr>
-                    <td>{{ item.nome }}</td>
-                    <td style="color:#aaa;">{{ item.variacao }}</td>
+                    <td>{{ item.nome }} <small style="color:#aaa; display:block;">{{ item.variacao }}</small></td>
                     <td>{{ item.quantidade }}x</td>
-                    <td style="color:#00cc66;">R$ {{ "%.2f"|format(subtotal) }}</td>
+                    <td style="color:#00cc66; font-weight: bold;">R$ {{ "%.2f"|format(subtotal) }}</td>
                 </tr>
                 {% endfor %}
             </table>
-            <div class="total-box">TOTAL A PAGAR: R$ {{ "%.2f"|format(total.valor) }}</div>
+            <div class="total-box">VALOR TOTAL: R$ {{ "%.2f"|format(total.valor) }}</div>
         {% else %}
-            <p style="color: #ff4d4d;">Seu carrinho está vazio.</p>
+            <p style="color: #ef4444;">Seu carrinho está vazio no momento.</p>
         {% endif %}
     </div>
 
     {% if carrinho %}
     <form action="/finalizar_pedido" method="POST">
         <div class="box">
-            <h3>🚚 Método de Recebimento</h3>
+            <h3>Método de Entrega</h3>
             <div class="radio-group">
-                <label><input type="radio" name="tipo_entrega" value="retirada" checked onchange="toggleEndereco()"> Retirar no Local</label>
-                <label><input type="radio" name="tipo_entrega" value="entrega" onchange="toggleEndereco()"> Entrega em Casa</label>
+                <label><input type="radio" name="tipo_entrega" value="retirada" checked onchange="toggleEndereco()"> Retirada na Loja</label>
+                <label><input type="radio" name="tipo_entrega" value="entrega" onchange="toggleEndereco()"> Entrega no Endereço</label>
             </div>
             
-            <div id="div-endereco" style="display: none; margin-bottom: 20px;">
-                <label style="color:#FF8C00;">Endereço Completo:</label>
-                <input type="text" name="endereco_entrega" id="input-endereco" placeholder="Rua, Número, Bairro, Referência">
+            <div id="div-endereco" style="display: none; margin-top: 15px;">
+                <label style="color:#FF8C00; font-size: 0.9em;">Endereço Completo de Destino:</label>
+                <input type="text" name="endereco_entrega" id="input-endereco" placeholder="Rua, Número, Bairro e Cidade">
             </div>
-
-            <label style="color:#FF8C00; display:block; margin-top:10px;">Vai precisar de Chopeira?</label>
-            <select name="id_equipamento" style="margin-bottom: 20px;">
-                <option value="">Não preciso, apenas a bebida.</option>
-                {% for eq in equipamentos %}
-                <option value="{{ eq[0] }}">{{ eq[1] }}</option>
-                {% endfor %}
-            </select>
         </div>
 
         <div class="box">
-            <h3>💰 Pagamento (Simulação)</h3>
+            <h3>Forma de Pagamento</h3>
             <div class="radio-group">
-                <label><input type="radio" name="pagamento" value="pix" checked> Pix</label>
-                <label><input type="radio" name="pagamento" value="cartao"> Cartão (Máquininha)</label>
-                <label><input type="radio" name="pagamento" value="dinheiro"> Dinheiro</label>
+                <label><input type="radio" name="pagamento" value="pix" checked> PIX (Aprovação Imediata)</label>
+                <label><input type="radio" name="pagamento" value="cartao"> Cartão de Crédito/Débito</label>
             </div>
-            <button type="submit">Confirmar e Gerar Pedido</button>
+            <button type="submit">Fechar Pedido e Pagar</button>
         </div>
     </form>
     {% endif %}
