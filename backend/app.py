@@ -38,7 +38,6 @@ def atualizar_estoque_google(nome_prod, novo_estoque):
         return True
     except Exception as e: return False
 
-# ATUALIZADO: Cadastra novos produtos vindos da Planilha (UPSERT)
 def sincronizar_do_google_para_banco():
     try:
         caminho_json = buscar_caminho_json()
@@ -51,7 +50,7 @@ def sincronizar_do_google_para_banco():
         conn = get_db_connection()
         cur = conn.cursor()
         for i, linha in enumerate(dados_planilha):
-            if i == 0: continue # Pula cabeçalho
+            if i == 0: continue
             if not linha or len(linha) < 4: continue
             nome_prod = linha[0].strip()
             categoria = linha[1].strip()
@@ -132,7 +131,6 @@ def fazer_login():
         return redirect(url_for('painel_admin')) if usuario[2] in ['admin', 'auxiliar'] else redirect(url_for('painel_cliente'))
     return render_template('login.html', erro="E-mail ou senha incorretos.")
 
-# ----- ÁREA DE GERENCIAMENTO (ADMIN / AUXILIAR) -----
 @app.route('/painel_admin')
 def painel_admin():
     if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
@@ -255,7 +253,6 @@ def cadastrar_produto():
             return redirect(url_for('painel_admin', erro=f"Erro ao cadastrar: {str(e)}"))
     return redirect(url_for('tela_login'))
 
-# ATUALIZADO: Deletar do Site apaga o produto do Google Sheets automaticamente
 @app.route('/deletar_produto/<int:id_produto>', methods=['POST'])
 def deletar_produto(id_produto):
     if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
@@ -379,7 +376,6 @@ def deletar_despesa(id_despesa):
         return redirect(url_for('painel_admin', sucesso="Despesa removida!"))
     return redirect(url_for('painel_admin'))
 
-# ----- ÁREA DO CLIENTE COM CARRINHO E AJAX -----
 @app.route('/painel_cliente')
 def painel_cliente():
     if 'id_usuario' in session:
@@ -391,7 +387,6 @@ def painel_cliente():
         cur.execute('SELECT id_produto, nome, categoria, quantidade_estoque, preco, imagem_url, variacao FROM produto WHERE quantidade_estoque > 0 ORDER BY nome ASC')
         produtos = [{'id': p[0], 'nome': p[1], 'categoria': p[2], 'estoque': p[3], 'preco': p[4], 'imagem': p[5], 'variacoes': [v.strip() for v in p[6].split(',')] if p[6] else []} for p in cur.fetchall()]
         
-        # ATUALIZADO: Puxa os equipamentos livres direto para a vitrine do cliente
         cur.execute("SELECT id_equipamento, nome FROM equipamento WHERE status = 'disponivel' ORDER BY nome ASC")
         equipamentos = cur.fetchall()
         
@@ -406,7 +401,6 @@ def painel_cliente():
         return render_template('cliente.html', nome=session['nome'], produtos=produtos, equipamentos=equipamentos, meus_pedidos=meus_pedidos, sucesso=sucesso, erro=erro)
     return redirect(url_for('tela_login'))
 
-# ATUALIZADO: Processa adições normais e adições de Aluguel de Chopeiras
 @app.route('/adicionar_carrinho_ajax', methods=['POST'])
 def adicionar_carrinho_ajax():
     if 'id_usuario' not in session: return jsonify({'status': 'erro'})
@@ -427,14 +421,20 @@ def adicionar_carrinho_ajax():
             carrinho.append({'id_produto': None, 'id_equipamento': id_eq, 'nome': "Aluguel: " + nome_eq, 'preco': preco_eq, 'quantidade': 1, 'variacao': 'Equipamento'})
         return jsonify({'status': 'ok', 'nome_produto': nome_eq})
     else:
-        id_produto, quantidade, variacao, nome_produto, preco_produto = int(request.form['id_produto']), int(request.form['quantidade']), request.form.get('variacao_escolhida', 'Padrão'), request.form['nome_produto'], float(request.form['preco_produto'])
+        id_produto = int(request.form['id_produto'])
+        quantidade = int(request.form['quantidade'])
+        variacao = request.form.get('variacao_escolhida', 'Padrão')
+        nome_produto = request.form['nome_produto']
+        preco_produto = float(request.form['preco_produto'])
+        
         item_existe = False
         for item in carrinho:
             if item.get('id_produto') == id_produto and item.get('variacao') == variacao:
                 item['quantidade'] += quantidade
                 item_existe = True; break
         if not item_existe: 
-            carrinho.append({'id_produto': id_produto, 'id_equipamento': None, 'nome': nome_produto, 'preco': preco_produto, 'quantidade': quantity = quantidade, 'variacao': variacao})
+            # AQUI ESTAVA O ERRO DE SINTAXE. CORRIGIDO PARA: 'quantidade': quantidade
+            carrinho.append({'id_produto': id_produto, 'id_equipamento': None, 'nome': nome_produto, 'preco': preco_produto, 'quantidade': quantidade, 'variacao': variacao})
             
     session['carrinho'] = carrinho
     session.modified = True
@@ -445,7 +445,6 @@ def checkout():
     if 'id_usuario' not in session: return redirect(url_for('tela_login'))
     return render_template('checkout.html', carrinho=session.get('carrinho', []))
 
-# ATUALIZADO: Captura a chopeira do carrinho se ela foi selecionada na área de vendas
 @app.route('/finalizar_pedido', methods=['POST'])
 def finalizar_pedido():
     if 'id_usuario' not in session or not session.get('carrinho'): return redirect(url_for('painel_cliente'))
@@ -479,7 +478,6 @@ def finalizar_pedido():
     finally:
         cur.close(); conn.close()
 
-# ----- GESTÃO DE CONTAS (TRAVA EXCLUSIVA DE SEGURANÇA: MÁXIMO 3 ADMINS, MÍNIMO 1) -----
 @app.route('/promover_usuario/<int:id_usuario>/<string:cargo>', methods=['POST'])
 def promover_usuario(id_usuario, cargo):
     if 'id_usuario' in session and session['tipo_usuario'] == 'admin' and cargo in ['admin', 'auxiliar', 'cliente']:
