@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choperia — Finalizar Pedido</title>
+    <!-- FAVICON ADICIONADO AQUI -->
+    <link rel="icon" href="{{ url_for('static', filename='midia/favicon.png') }}" type="image/png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,22 +66,7 @@
         .nav-logo {
             display: flex;
             align-items: center;
-            gap: 9px;
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--amber);
             text-decoration: none;
-        }
-        .nav-logo-icon {
-            width: 34px;
-            height: 34px;
-            background: var(--amber-glow);
-            border: 1px solid rgba(232,138,0,0.3);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .btn-back {
             display: flex;
@@ -333,11 +320,9 @@
 
     <!-- ======== NAVBAR ======== -->
     <nav class="navbar" role="navigation" aria-label="Navegação">
+        <!-- LOGO ATUALIZADA AQUI -->
         <a class="nav-logo" href="/painel_cliente">
-            <div class="nav-logo-icon" aria-hidden="true">
-                <i class="ph-fill ph-beer-stein" style="color:var(--amber);"></i>
-            </div>
-            Choperia
+            <img src="{{ url_for('static', filename='midia/logo.png') }}" alt="Projeto Chopp" style="height: 45px; width: auto; object-fit: contain;">
         </a>
         <a href="/painel_cliente" class="btn-back">
             <i class="ph-bold ph-arrow-left" aria-hidden="true"></i>

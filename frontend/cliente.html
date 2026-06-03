@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choperia — Delivery</title>
+    <!-- FAVICON ADICIONADO AQUI -->
+    <link rel="icon" href="{{ url_for('static', filename='midia/favicon.png') }}" type="image/png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +14,7 @@
 
     <style>
         /* ================================================
-           TOKENS & RESET
+            TOKENS & RESET
         ================================================ */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -59,7 +61,7 @@
         }
 
         /* ================================================
-           SCROLL REVEAL ANIMATION SYSTEM
+            SCROLL REVEAL ANIMATION SYSTEM
         ================================================ */
         .reveal {
             opacity: 0;
@@ -77,7 +79,7 @@
         .reveal-delay-4 { transition-delay: 0.4s; }
 
         /* ================================================
-           NAVIGATION
+            NAVIGATION
         ================================================ */
         .navbar {
             position: sticky;
@@ -102,24 +104,7 @@
         .nav-logo {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-family: 'Syne', sans-serif;
-            font-size: 1.35rem;
-            font-weight: 800;
-            color: var(--amber);
-            letter-spacing: -0.01em;
             text-decoration: none;
-        }
-        .nav-logo .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: var(--amber-glow);
-            border: 1px solid rgba(232,138,0,0.3);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
         }
 
         .nav-actions { display: flex; align-items: center; gap: 10px; }
@@ -168,7 +153,7 @@
         }
 
         /* ================================================
-           HERO SECTION
+            HERO SECTION
         ================================================ */
         .hero {
             position: relative;
@@ -247,7 +232,7 @@
         }
 
         /* ================================================
-           LAYOUT
+            LAYOUT
         ================================================ */
         .page-body {
             max-width: 1280px;
@@ -256,7 +241,7 @@
         }
 
         /* ================================================
-           ALERT / SUCCESS BANNER
+            ALERT / SUCCESS BANNER
         ================================================ */
         .alert-success {
             display: flex;
@@ -273,7 +258,7 @@
         }
 
         /* ================================================
-           SECTION HEADER
+            SECTION HEADER
         ================================================ */
         .section-header {
             margin-bottom: 28px;
@@ -303,7 +288,7 @@
         }
 
         /* ================================================
-           CHOPEIRA SECTION
+            CHOPEIRA SECTION
         ================================================ */
         .chopeira-section {
             background: var(--surface);
@@ -348,7 +333,7 @@
         }
 
         /* ================================================
-           FORM ELEMENTS
+            FORM ELEMENTS
         ================================================ */
         .field-group { display: flex; flex-direction: column; gap: 6px; }
         .field-label {
@@ -377,7 +362,7 @@
         .field-select option { background: #1c1c28; }
 
         /* ================================================
-           BUTTONS
+            BUTTONS
         ================================================ */
         .btn {
             display: inline-flex;
@@ -414,7 +399,7 @@
         .btn-ghost:hover { background: var(--border-2); }
 
         /* ================================================
-           FILTER TABS
+            FILTER TABS
         ================================================ */
         .filter-bar {
             display: flex;
@@ -449,7 +434,7 @@
         }
 
         /* ================================================
-           PRODUCT GRID
+            PRODUCT GRID
         ================================================ */
         .vitrine-grid {
             display: grid;
@@ -600,7 +585,7 @@
         .card-select option { background: #1c1c28; }
 
         /* ================================================
-           HISTORY SECTION
+            HISTORY SECTION
         ================================================ */
         .history-section { margin-top: 8px; }
 
@@ -684,7 +669,7 @@
         .empty-state p { font-size: 0.9rem; }
 
         /* ================================================
-           TOAST
+            TOAST
         ================================================ */
         #toast {
             position: fixed;
@@ -726,7 +711,7 @@
         }
 
         /* ================================================
-           DIVIDER
+            DIVIDER
         ================================================ */
         .section-divider {
             height: 1px;
@@ -735,7 +720,7 @@
         }
 
         /* ================================================
-           SCROLLBAR
+            SCROLLBAR
         ================================================ */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -747,9 +732,9 @@
 
     <!-- ======== NAVIGATION ======== -->
     <nav class="navbar" id="navbar" role="navigation" aria-label="Navegação principal">
+        <!-- LOGO ATUALIZADA AQUI -->
         <a class="nav-logo" href="/painel_cliente">
-            <div class="logo-icon" aria-hidden="true"><i class="ph-fill ph-beer-stein"></i></div>
-            Choperia
+            <img src="{{ url_for('static', filename='midia/logo.png') }}" alt="Projeto Chopp" style="height: 45px; width: auto; object-fit: contain;">
         </a>
 
         <div class="nav-actions">

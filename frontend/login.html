@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choperia — Entrar</title>
+    <!-- FAVICON ADICIONADO AQUI -->
+    <link rel="icon" href="{{ url_for('static', filename='midia/favicon.png') }}" type="image/png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -91,25 +93,6 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 28px;
-        }
-        .brand-icon {
-            width: 42px;
-            height: 42px;
-            background: var(--amber-glow);
-            border: 1px solid rgba(232,138,0,0.3);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: var(--amber);
-        }
-        .brand-name {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--amber);
-            letter-spacing: -0.01em;
         }
 
         /* Heading */
@@ -276,12 +259,9 @@
 
     <main class="login-card" role="main">
 
-        <!-- Brand -->
-        <div class="brand">
-            <div class="brand-icon" aria-hidden="true">
-                <i class="ph-fill ph-beer-stein"></i>
-            </div>
-            <span class="brand-name">Choperia</span>
+        <!-- LOGO ATUALIZADA AQUI -->
+        <div class="brand" style="justify-content: center; margin-bottom: 30px;">
+            <img src="{{ url_for('static', filename='midia/logo.png') }}" alt="Projeto Chopp" style="height: 80px; width: auto;">
         </div>
 
         <h1 class="login-heading">Bem-vindo de volta</h1>
