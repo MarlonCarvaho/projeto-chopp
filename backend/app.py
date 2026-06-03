@@ -1,4 +1,5 @@
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from werkzeug.utils import secure_filename
 import os
 import psycopg2
 from dotenv import load_dotenv
@@ -237,13 +238,34 @@ def cadastrar_produto():
         categoria = request.form['categoria']
         quantidade = request.form['quantidade']
         preco = request.form['preco']
-        imagem = request.form.get('imagem_url', 'default.webp')
         variacao = request.form.get('variacao', '')
+        
+        # --- NOVA LÓGICA DE UPLOAD DE IMAGEM ---
+        imagem_nome = 'default.webp' # Imagem padrão se o usuário não enviar nenhuma
+        
+        if 'imagem_arquivo' in request.files:
+            file = request.files['imagem_arquivo']
+            if file and file.filename != '':
+                # Limpa o nome do arquivo (tira acentos, espaços, etc)
+                filename = secure_filename(file.filename)
+                # Adiciona data e hora no nome para nunca substituir uma imagem com o mesmo nome
+                nome_unico = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+                
+                # Cria o caminho exato para salvar na pasta static/midia
+                caminho_salvar = os.path.join(app.static_folder, 'midia', nome_unico)
+                os.makedirs(os.path.dirname(caminho_salvar), exist_ok=True) # Garante que a pasta exista
+                
+                # Salva o arquivo fisicamente na pasta
+                file.save(caminho_salvar)
+                imagem_nome = nome_unico # Atualiza a variável para salvar no banco de dados
+        # ---------------------------------------
+
         try:
             conn = get_db_connection()
             cur = conn.cursor()
+            # Salva no banco de dados usando a variável imagem_nome
             cur.execute('INSERT INTO produto (nome, categoria, quantidade_estoque, preco, imagem_url, variacao) VALUES (%s, %s, %s, %s, %s, %s)',
-                        (nome, categoria, quantidade, preco, imagem, variacao))
+                        (nome, categoria, quantidade, preco, imagem_nome, variacao))
             conn.commit()
             cur.close()
             conn.close()

@@ -205,7 +205,7 @@
             <div class="box">
                 <a href="/sincronizar_estoque" class="btn-sync"><i class="ph ph-arrows-clockwise"></i> Sincronizar Planilha</a>
                 <h2>Estoque Geral</h2>
-                <form action="/cadastrar_produto" method="POST" class="form-inline">
+                <form action="/cadastrar_produto" method="POST" class="form-inline" enctype="multipart/form-data">
                     <input type="text" name="nome" placeholder="Nome" required>
                     <select name="categoria" required>
                         <option value="Chopp">Chopp</option>
@@ -214,7 +214,9 @@
                     </select>
                     <input type="number" name="quantidade" placeholder="Qtd" required>
                     <input type="text" name="preco" placeholder="Preço" required>
-                    <input type="text" name="imagem_url" placeholder="Imagem (ex: canuto.webp)">
+                    
+                    <input type="file" name="imagem_arquivo" accept="image/*" style="background: var(--bg-dark); color: var(--text-muted); padding: 8px;">
+                    
                     <input type="text" name="variacao" placeholder="Variações">
                     <button type="submit">Cadastrar</button>
                 </form>
