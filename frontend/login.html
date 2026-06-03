@@ -3,67 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Projeto Chopp</title>
+    <title>Choperia — Entrar</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --amber:      #E88A00;
+            --amber-glow: rgba(232, 138, 0, 0.2);
+            --amber-soft: rgba(232, 138, 0, 0.08);
+            --green:      #12A871;
+            --red:        #E84040;
+            --red-soft:   rgba(232, 64, 64, 0.12);
+
+            --bg:         #0C0C10;
+            --surface:    #13131A;
+            --surface-2:  #1C1C28;
+            --border:     rgba(255,255,255,0.07);
+            --border-2:   rgba(255,255,255,0.12);
+            --text:       #F0F0F8;
+            --text-muted: #8A8A9E;
+            --text-dim:   #5A5A6E;
+
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        html, body {
+            height: 100%;
+            min-height: 100vh;
+        }
+
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            position: relative;
+            overflow-x: hidden;
         }
-        .container {
-            background-color: #1e1e1e;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.2);
+
+        /* Background radial glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 600px;
+            background: radial-gradient(ellipse, rgba(232,138,0,0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Main card */
+        .login-card {
+            position: relative;
+            z-index: 1;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            background: var(--surface);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius-lg);
+            padding: clamp(28px, 6vw, 44px);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+
+            animation: slideUp 0.5s cubic-bezier(0.2,0,0.1,1) forwards;
         }
-        h2 { color: #FF8C00; text-align: center; margin-bottom: 20px; }
-        input {
-            width: 100%; padding: 10px; margin: 10px 0;
-            background-color: #2c2c2c; color: white;
-            border: 1px solid #444; border-radius: 5px; box-sizing: border-box;
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        input:focus { outline: none; border-color: #FF8C00; }
-        .btn-laranja {
-            width: 100%; background-color: #FF8C00; color: #121212;
-            padding: 12px; border: none; border-radius: 5px;
-            font-weight: bold; font-size: 1.1em; cursor: pointer;
-            margin-top: 15px; transition: 0.3s;
+
+        /* Brand header */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
         }
-        .btn-laranja:hover { background-color: #e67e00; box-shadow: 0 0 10px #FF8C00; }
-        .erro { color: #ff4d4d; text-align: center; font-weight: bold; }
-        .links { text-align: center; margin-top: 20px; }
-        .links a { color: #FF8C00; text-decoration: none; }
-        .links a:hover { text-decoration: underline; }
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--amber-glow);
+            border: 1px solid rgba(232,138,0,0.3);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--amber);
+        }
+        .brand-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--amber);
+            letter-spacing: -0.01em;
+        }
+
+        /* Heading */
+        .login-heading {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .login-sub {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        /* Error message */
+        .erro-msg {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            background: var(--red-soft);
+            border: 1px solid rgba(232,64,64,0.25);
+            border-radius: var(--radius-sm);
+            color: var(--red);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        /* Form fields */
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .field-label {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .field-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .field-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--text-dim);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+        .field-input {
+            width: 100%;
+            padding: 12px 14px 12px 38px;
+            background: var(--bg);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-input::placeholder { color: var(--text-dim); }
+        .field-input:focus {
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(232,138,0,0.12);
+        }
+        .field-input:focus + .field-icon,
+        .field-wrap:focus-within .field-icon {
+            color: var(--amber);
+        }
+
+        /* Fix icon position for left icon */
+        .field-wrap .field-icon-left {
+            position: absolute;
+            left: 12px;
+            color: var(--text-dim);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Password toggle */
+        .field-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1rem;
+            display: flex;
+            transition: color 0.2s;
+        }
+        .field-toggle:hover { color: var(--text); }
+
+        /* Submit button */
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: var(--amber);
+            color: #0C0C10;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+        }
+        .btn-submit:hover {
+            background: #d07d00;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(232,138,0,0.3);
+        }
+        .btn-submit:active { transform: translateY(0); }
+
+        /* Divider */
+        .form-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+        .form-divider::before,
+        .form-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Link section */
+        .form-footer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 20px;
+        }
+        .form-footer a {
+            color: var(--amber);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .form-footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>Acessar o Sistema</h2>
-        
-        {% if erro %} <p class="erro">{{ erro }}</p> {% endif %}
+    <main class="login-card" role="main">
 
-        <form action="/fazer_login" method="POST">
-            <label>E-mail:</label>
-            <input type="email" name="email" required>
+        <!-- Brand -->
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true">
+                <i class="ph-fill ph-beer-stein"></i>
+            </div>
+            <span class="brand-name">Choperia</span>
+        </div>
 
-            <label>Senha:</label>
-            <input type="password" name="senha" required>
+        <h1 class="login-heading">Bem-vindo de volta</h1>
+        <p class="login-sub">Entre com seu e-mail e senha para continuar.</p>
 
-            <button type="submit" class="btn-laranja">Entrar</button>
+        <!-- Error message -->
+        {%- if erro %}
+        <div class="erro-msg" role="alert">
+            <i class="ph-bold ph-x-circle" aria-hidden="true"></i>
+            {{ erro }}
+        </div>
+        {%- endif %}
+
+        <!-- Login form -->
+        <form action="/fazer_login" method="POST" novalidate>
+
+            <div class="field-group">
+                <label class="field-label" for="email">E-mail</label>
+                <div class="field-wrap">
+                    <i class="ph ph-envelope field-icon-left" aria-hidden="true"></i>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="field-input"
+                        placeholder="seu@email.com"
+                        autocomplete="email"
+                        required>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="senha">Senha</label>
+                <div class="field-wrap">
+                    <i class="ph ph-lock field-icon-left" aria-hidden="true"></i>
+                    <input
+                        type="password"
+                        id="senha"
+                        name="senha"
+                        class="field-input"
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                        required>
+                    <button type="button" class="field-toggle" onclick="toggleSenha(this)" aria-label="Mostrar/ocultar senha">
+                        <i class="ph ph-eye" id="eye-icon" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="ph-bold ph-sign-in" aria-hidden="true"></i>
+                Entrar
+            </button>
         </form>
 
-        <div class="links">
-            <p>Ainda não tem conta? <a href="/cadastro">Cadastre-se aqui</a></p>
-        </div>
-    </div>
+        <div class="form-divider">ou</div>
 
+        <div class="form-footer">
+            Não tem conta? <a href="/cadastro">Cadastre-se gratuitamente</a>
+        </div>
+
+    </main>
+
+    <script>
+        function toggleSenha(btn) {
+            const input = document.getElementById('senha');
+            const icon  = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'ph ph-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'ph ph-eye';
+            }
+        }
+    </script>
 </body>
 </html>

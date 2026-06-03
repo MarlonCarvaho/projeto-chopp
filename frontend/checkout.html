@@ -2,88 +2,519 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Checkout - Concluir Compra</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choperia — Finalizar Pedido</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
-        * { box-sizing: border-box; }
-        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; overflow-x: hidden; width: 100%; }
-        h1, h3 { color: #FF8C00; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; width: 100%; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border-bottom: 1px solid #333; padding: 12px 10px; text-align: left; }
-        th { color: #FF8C00; text-transform: uppercase; font-size: 12px; }
-        .total-box { font-size: 1.4em; color: #00cc66; text-align: right; font-weight: bold; }
-        input[type="text"], select { padding: 12px; background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 8px; width: 100%; margin-top: 5px; }
-        .radio-group { margin: 15px 0; background: #2c2c2c; padding: 15px; border-radius: 8px; }
-        .radio-group label { margin-right: 20px; cursor: pointer; }
-        button { background: #00cc66; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 8px; width: 100%; font-size: 1.1em; transition: 0.3s; }
-        button:hover { background: #00994c; }
-        .btn-voltar { display: inline-block; background: #333; color: white; text-decoration: none; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --amber:      #E88A00;
+            --amber-glow: rgba(232, 138, 0, 0.18);
+            --amber-soft: rgba(232, 138, 0, 0.08);
+            --green:      #12A871;
+            --green-soft: rgba(18, 168, 113, 0.12);
+            --red:        #E84040;
+            --red-soft:   rgba(232, 64, 64, 0.10);
+
+            --bg:         #0C0C10;
+            --surface:    #13131A;
+            --surface-2:  #1C1C28;
+            --border:     rgba(255,255,255,0.07);
+            --border-2:   rgba(255,255,255,0.12);
+            --text:       #F0F0F8;
+            --text-muted: #8A8A9E;
+            --text-dim:   #5A5A6E;
+
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 16px;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* ---- Nav ---- */
+        .navbar {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 clamp(16px, 4vw, 40px);
+            background: rgba(12,12,16,0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--amber);
+            text-decoration: none;
+        }
+        .nav-logo-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--amber-glow);
+            border: 1px solid rgba(232,138,0,0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { color: var(--text); border-color: var(--border-2); background: var(--border-2); }
+
+        /* ---- Page layout ---- */
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 40px);
+            display: grid;
+            grid-template-columns: 1fr minmax(0, 400px);
+            gap: 28px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .page { grid-template-columns: 1fr; }
+        }
+
+        /* ---- Section heading ---- */
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 28px;
+            grid-column: 1 / -1;
+        }
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        /* ---- Card / box ---- */
+        .box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: clamp(18px, 3vw, 28px);
+            margin-bottom: 20px;
+        }
+
+        /* ---- Order summary table ---- */
+        .order-table { width: 100%; border-collapse: collapse; }
+        .order-table th {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 0 0 12px 0;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .order-table th:last-child { text-align: right; }
+        .order-table td {
+            padding: 13px 0;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .order-table td:last-child {
+            text-align: right;
+            color: var(--green);
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        .order-table tr:last-child td { border-bottom: none; }
+
+        .item-name { font-size: 0.9rem; font-weight: 500; margin-bottom: 2px; }
+        .item-var  { font-size: 0.78rem; color: var(--text-muted); }
+        .item-qty  { font-size: 0.82rem; color: var(--text-dim); }
+
+        /* Total row */
+        .total-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            margin-top: 4px;
+            border-top: 1px solid var(--border-2);
+        }
+        .total-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .total-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--green);
+        }
+
+        /* Empty cart */
+        .empty-cart {
+            text-align: center;
+            padding: 32px 0;
+            color: var(--text-dim);
+        }
+        .empty-cart i { font-size: 2rem; margin-bottom: 8px; display: block; opacity: 0.5; }
+        .empty-cart p { font-size: 0.9rem; }
+        .empty-cart a { color: var(--amber); text-decoration: none; }
+
+        /* ---- Right column (delivery + payment) ---- */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+        /* Radio groups */
+        .radio-list { display: flex; flex-direction: column; gap: 10px; }
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+        }
+        .radio-item:has(input:checked) {
+            border-color: var(--amber);
+            background: var(--amber-soft);
+        }
+        .radio-item input[type="radio"] {
+            accent-color: var(--amber);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .radio-info { flex: 1; }
+        .radio-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+        .radio-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .radio-icon {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+        }
+        .radio-item:has(input:checked) .radio-icon { color: var(--amber); }
+
+        /* Address field */
+        .address-field {
+            margin-top: 12px;
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .field-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: block;
+        }
+        .field-input {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-input:focus {
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(232,138,0,0.1);
+        }
+        .field-input::placeholder { color: var(--text-dim); }
+
+        /* Submit button */
+        .btn-finalizar {
+            width: 100%;
+            padding: 15px;
+            background: var(--green);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+        }
+        .btn-finalizar:hover {
+            background: #0f9460;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(18,168,113,0.35);
+        }
+        .btn-finalizar:active { transform: translateY(0); }
+
+        /* Trust badges */
+        .trust-strip {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            padding: 14px 0 0;
+            color: var(--text-dim);
+            font-size: 0.78rem;
+        }
+        .trust-item { display: flex; align-items: center; gap: 5px; }
+        .trust-item i { color: var(--green); font-size: 1rem; }
     </style>
 </head>
 <body>
-    <a href="/painel_cliente" class="btn-voltar">⬅ Voltar à Vitrine</a>
-    <h1>Finalizar Pedido</h1>
 
-    <div class="box">
-        <h3>Resumo dos Itens Selecionados</h3>
-        {% if carrinho %}
-            <table>
-                <tr><th>Item / Configuração</th><th>Qtd</th><th>Subtotal</th></tr>
-                {% set total = namespace(valor=0) %}
-                {% for item in carrinho %}
-                    {% set subtotal = item.preco * item.quantidade %}
-                    {% set total.valor = total.valor + subtotal %}
-                <tr>
-                    <td>{{ item.nome }} <small style="color:#aaa; display:block;">{{ item.variacao }}</small></td>
-                    <td>{{ item.quantidade }}x</td>
-                    <td style="color:#00cc66; font-weight: bold;">R$ {{ "%.2f"|format(subtotal) }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            <div class="total-box">VALOR TOTAL: R$ {{ "%.2f"|format(total.valor) }}</div>
-        {% else %}
-            <p style="color: #ef4444;">Seu carrinho está vazio no momento.</p>
-        {% endif %}
-    </div>
+    <!-- ======== NAVBAR ======== -->
+    <nav class="navbar" role="navigation" aria-label="Navegação">
+        <a class="nav-logo" href="/painel_cliente">
+            <div class="nav-logo-icon" aria-hidden="true">
+                <i class="ph-fill ph-beer-stein" style="color:var(--amber);"></i>
+            </div>
+            Choperia
+        </a>
+        <a href="/painel_cliente" class="btn-back">
+            <i class="ph-bold ph-arrow-left" aria-hidden="true"></i>
+            Voltar à vitrine
+        </a>
+    </nav>
 
-    {% if carrinho %}
-    <form action="/finalizar_pedido" method="POST">
-        <div class="box">
-            <h3>Método de Entrega</h3>
-            <div class="radio-group">
-                <label><input type="radio" name="tipo_entrega" value="retirada" checked onchange="toggleEndereco()"> Retirada na Loja</label>
-                <label><input type="radio" name="tipo_entrega" value="entrega" onchange="toggleEndereco()"> Entrega no Endereço</label>
-            </div>
-            
-            <div id="div-endereco" style="display: none; margin-top: 15px;">
-                <label style="color:#FF8C00; font-size: 0.9em;">Endereço Completo de Destino:</label>
-                <input type="text" name="endereco_entrega" id="input-endereco" placeholder="Rua, Número, Bairro e Cidade">
-            </div>
-        </div>
+    <!-- ======== PAGE ======== -->
+    <main class="page" role="main">
 
-        <div class="box">
-            <h3>Forma de Pagamento</h3>
-            <div class="radio-group">
-                <label><input type="radio" name="pagamento" value="pix" checked> PIX (Aprovação Imediata)</label>
-                <label><input type="radio" name="pagamento" value="cartao"> Cartão de Crédito/Débito</label>
+        <h1 class="page-title">Finalizar Pedido</h1>
+
+        <!-- LEFT: ORDER SUMMARY -->
+        <section aria-labelledby="summary-title">
+            <div class="box">
+                <div class="section-label">
+                    <i class="ph ph-shopping-cart" aria-hidden="true"></i>
+                    Resumo
+                </div>
+                <h2 class="section-title" id="summary-title">Itens Selecionados</h2>
+
+                {%- if carrinho %}
+                <table class="order-table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Item</th>
+                            <th scope="col">Qtd.</th>
+                            <th scope="col">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {%- set total = namespace(valor=0) %}
+                        {%- for item in carrinho %}
+                        {%- set subtotal = item.preco * item.quantidade %}
+                        {%- set total.valor = total.valor + subtotal %}
+                        <tr>
+                            <td>
+                                <div class="item-name">{{ item.nome }}</div>
+                                <div class="item-var">{{ item.variacao }}</div>
+                            </td>
+                            <td>
+                                <div class="item-qty">{{ item.quantidade }}×</div>
+                            </td>
+                            <td>R$ {{ "%.2f"|format(subtotal) }}</td>
+                        </tr>
+                        {%- endfor %}
+                    </tbody>
+                </table>
+
+                <div class="total-row">
+                    <span class="total-label">Total</span>
+                    <span class="total-value" aria-label="Valor total: R$ {{ '%.2f'|format(total.valor) }}">
+                        R$ {{ "%.2f"|format(total.valor) }}
+                    </span>
+                </div>
+                {%- else %}
+                <div class="empty-cart">
+                    <i class="ph ph-shopping-cart" aria-hidden="true"></i>
+                    <p>Seu carrinho está vazio. <a href="/painel_cliente">Adicione produtos</a>.</p>
+                </div>
+                {%- endif %}
             </div>
-            <button type="submit">Fechar Pedido e Pagar</button>
-        </div>
-    </form>
-    {% endif %}
+        </section>
+
+        <!-- RIGHT: DELIVERY + PAYMENT -->
+        {%- if carrinho %}
+        <aside class="sidebar">
+            <form action="/finalizar_pedido" method="POST" novalidate>
+
+                <!-- Delivery method -->
+                <div class="box">
+                    <div class="section-label">
+                        <i class="ph ph-truck" aria-hidden="true"></i>
+                        Entrega
+                    </div>
+                    <h2 class="section-title">Método de Entrega</h2>
+
+                    <div class="radio-list" role="group" aria-label="Escolha o método de entrega">
+                        <label class="radio-item">
+                            <input type="radio" name="tipo_entrega" value="retirada"
+                                   checked onchange="toggleEndereco()">
+                            <div class="radio-icon"><i class="ph ph-storefront" aria-hidden="true"></i></div>
+                            <div class="radio-info">
+                                <div class="radio-name">Retirada na Loja</div>
+                                <div class="radio-desc">Retire no nosso estabelecimento</div>
+                            </div>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="tipo_entrega" value="entrega"
+                                   onchange="toggleEndereco()">
+                            <div class="radio-icon"><i class="ph ph-map-pin" aria-hidden="true"></i></div>
+                            <div class="radio-info">
+                                <div class="radio-name">Entrega no Endereço</div>
+                                <div class="radio-desc">Receba onde você estiver</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="div-endereco" class="address-field" style="display:none;">
+                        <label class="field-label" for="endereco">Endereço de Entrega</label>
+                        <input
+                            type="text"
+                            id="endereco"
+                            name="endereco_entrega"
+                            class="field-input"
+                            placeholder="Rua, Número, Bairro, Cidade">
+                    </div>
+                </div>
+
+                <!-- Payment method -->
+                <div class="box">
+                    <div class="section-label">
+                        <i class="ph ph-credit-card" aria-hidden="true"></i>
+                        Pagamento
+                    </div>
+                    <h2 class="section-title">Forma de Pagamento</h2>
+
+                    <div class="radio-list" role="group" aria-label="Escolha a forma de pagamento">
+                        <label class="radio-item">
+                            <input type="radio" name="pagamento" value="pix" checked>
+                            <div class="radio-icon"><i class="ph ph-qr-code" aria-hidden="true"></i></div>
+                            <div class="radio-info">
+                                <div class="radio-name">PIX</div>
+                                <div class="radio-desc">Aprovação imediata</div>
+                            </div>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="pagamento" value="cartao">
+                            <div class="radio-icon"><i class="ph ph-credit-card" aria-hidden="true"></i></div>
+                            <div class="radio-info">
+                                <div class="radio-name">Cartão de Crédito / Débito</div>
+                                <div class="radio-desc">Maquininha na entrega</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit" class="btn-finalizar">
+                            <i class="ph-bold ph-check-circle" aria-hidden="true"></i>
+                            Confirmar Pedido
+                        </button>
+                    </div>
+
+                    <div class="trust-strip" aria-label="Garantias">
+                        <div class="trust-item">
+                            <i class="ph ph-shield-check" aria-hidden="true"></i>
+                            Compra segura
+                        </div>
+                        <div class="trust-item">
+                            <i class="ph ph-clock" aria-hidden="true"></i>
+                            Envio rápido
+                        </div>
+                        <div class="trust-item">
+                            <i class="ph ph-headset" aria-hidden="true"></i>
+                            Suporte ativo
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </aside>
+        {%- endif %}
+
+    </main>
 
     <script>
         function toggleEndereco() {
-            let tipo = document.querySelector('input[name="tipo_entrega"]:checked').value;
-            let divEnd = document.getElementById('div-endereco');
-            let inputEnd = document.getElementById('input-endereco');
+            const tipo  = document.querySelector('input[name="tipo_entrega"]:checked').value;
+            const div   = document.getElementById('div-endereco');
+            const input = document.getElementById('endereco');
+
             if (tipo === 'entrega') {
-                divEnd.style.display = 'block';
-                inputEnd.required = true;
+                div.style.display = 'block';
+                input.required = true;
             } else {
-                divEnd.style.display = 'none';
-                inputEnd.required = false;
+                div.style.display = 'none';
+                input.required = false;
+                input.value = '';
             }
         }
     </script>
