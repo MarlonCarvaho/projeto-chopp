@@ -17,7 +17,7 @@
         body { margin: 0; background-color: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow-x: hidden; width: 100%; }
         
         .sidebar { width: 250px; background: var(--bg-panel); display: flex; flex-direction: column; border-right: 1px solid #2d2d3a; flex-shrink: 0; }
-        .logo { padding: 25px 20px; font-size: 1.2em; font-weight: bold; color: var(--primary); border-bottom: 1px solid #2d2d3a; display: flex; align-items: center; gap: 10px; }
+        .logo { padding: 25px 20px; font-size: 1.2em; font-weight: bold; color: var(--primary); border-bottom: 1px solid #2d2d3a; display: flex; align-items: center; gap: 10px; justify-content: center; }
         .nav-links { flex: 1; padding: 20px 0; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; }
         .nav-item { padding: 12px 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; border-left: 3px solid transparent; }
         .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); border-left-color: var(--primary); }
@@ -31,10 +31,10 @@
         .tab-pane { display: none; }
         .tab-pane.active { display: block; width: 100%; }
 
-        .box { background: var(--bg-panel); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); width: 100%; }
+        /* CORREÇÃO APLICADA: min-width: 0 resolve o bug de estourar a tela no mobile */
+        .box { background: var(--bg-panel); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); width: 100%; min-width: 0; }
         h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 8px;}
         
-        /* ATUALIZADO: Responsividade absoluta de tabelas */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 750px; }
         th, td { border-bottom: 1px solid #333; padding: 12px 10px; text-align: left; }
@@ -54,7 +54,6 @@
         .kpi-card .valor { font-size: 1.8em; font-weight: bold; margin-top: 5px; }
         .kpi-card.green { border-top-color: var(--accent); }
         
-        /* ATUALIZADO: Gráficos e finanças não quebram em telas pequenas */
         .dash-middle { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; width: 100%; }
         .chart-container { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; height: 350px; min-width: 0; position: relative; }
         .notes-container { background: var(--bg-panel); padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; min-width: 0; }
@@ -88,7 +87,9 @@
 <body>
 
     <div class="sidebar" id="sidebar">
-        <div class="logo"><i class="ph-fill ph-beer-stein"></i> Projeto Chopp</div>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='midia/logo.png') }}" alt="Projeto Chopp" style="height: 40px; width: auto; object-fit: contain;">
+        </div>
         <div class="nav-links">
             <div class="nav-item active" onclick="showTab('tab-dashboard', this)"><i class="ph ph-squares-four"></i> Dashboard</div>
             <div class="nav-item" onclick="showTab('tab-produtos', this)"><i class="ph ph-package"></i> Produtos</div>
@@ -172,8 +173,8 @@
 
             <div class="dash-middle">
                 <div class="box">
-                    <h2>Lançar Nova Despesa</h2>
-                    <form action="/cadastrar_despesa" method="POST" style="margin-top:15px;">
+                    <h2 style="justify-content: center;">Lançar Nova Despesa</h2>
+                    <form action="/cadastrar_despesa" method="POST" style="margin: 15px auto 0 auto; max-width: 500px; display: block;">
                         <input type="text" name="descricao" placeholder="Motivo do Gasto (Ex: Barris de Chopp)" required>
                         <input type="number" step="0.01" name="valor" placeholder="Valor Pago (R$)" required>
                         <button type="submit" style="background:var(--danger); color:white; width:100%;">Salvar Lançamento</button>
