@@ -31,7 +31,6 @@
         .tab-pane { display: none; }
         .tab-pane.active { display: block; width: 100%; }
 
-        /* CORREÇÃO APLICADA: min-width: 0 resolve o bug de estourar a tela no mobile */
         .box { background: var(--bg-panel); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); width: 100%; min-width: 0; }
         h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 8px;}
         
@@ -46,6 +45,8 @@
         
         .btn-sync { background: var(--accent); color: white; float: right; text-decoration: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 0.9em; }
         .btn-delete { background: var(--danger); color: white; padding: 6px 12px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-edit { background: #3b82f6; color: white; padding: 6px 12px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-edit:hover { background: #2563eb; }
         .form-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: center; margin-top: 15px; }
         
         .dash-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
@@ -68,6 +69,14 @@
         
         .menu-toggle { display: none; background: none; color: white; font-size: 2em; border: none; cursor: pointer; padding: 0; margin-right: 15px; }
         
+        /* CSS DO MODAL DE EDIÇÃO */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--bg-panel); width: 90%; max-width: 450px; padding: 25px; border-radius: 12px; border: 1px solid #444; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; }
+        .modal-close:hover { color: var(--danger); }
+        .modal-content label { font-size: 0.85em; color: var(--text-muted); margin-bottom: 4px; display: block; }
+
         @media (max-width: 992px) {
             .dash-middle { grid-template-columns: 1fr; }
             .chart-container { height: 300px; }
@@ -207,6 +216,7 @@
             <div class="box">
                 <a href="/sincronizar_estoque" class="btn-sync"><i class="ph ph-arrows-clockwise"></i> Sincronizar Planilha</a>
                 <h2>Estoque Geral</h2>
+                
                 <form action="/cadastrar_produto" method="POST" class="form-inline" enctype="multipart/form-data">
                     <input type="text" name="nome" placeholder="Nome" required>
                     <select name="categoria" required>
@@ -216,22 +226,26 @@
                     </select>
                     <input type="number" name="quantidade" placeholder="Qtd" required>
                     <input type="text" name="preco" placeholder="Preço" required>
-                    
                     <input type="file" name="imagem_arquivo" accept="image/*" style="background: var(--bg-dark); color: var(--text-muted); padding: 8px;">
-                    
                     <input type="text" name="variacao" placeholder="Variações">
                     <button type="submit">Cadastrar</button>
                 </form>
 
                 <div class="table-responsive">
                     <table>
-                        <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Estoque</th><th>Preço</th><th>Variações</th><th>Excluir</th></tr>
+                        <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Estoque</th><th>Preço</th><th>Variações</th><th>Ações</th></tr>
                         {% for p in produtos %}
                         <tr>
                             <td>{{ p[0] }}</td><td>{{ p[1] }}</td><td>{{ p[2] }}</td><td>{{ p[3] }} un.</td><td>R$ {{ p[4] }}</td><td>{{ p[6] if p[6] else '-' }}</td>
-                            <td>
+                            
+                            <td style="display: flex; gap: 6px;">
+                                <button type="button" class="btn-edit" aria-label="Editar" 
+                                        onclick="abrirModalEditar('{{ p[0] }}', '{{ p[1] }}', '{{ p[2] }}', '{{ p[3] }}', '{{ p[4] }}', '{{ p[6] if p[6] else '' }}')">
+                                    <i class="ph ph-pencil"></i>
+                                </button>
+                                
                                 <form action="/deletar_produto/{{ p[0] }}" method="POST" style="margin:0;" onsubmit="return confirm('Isso removerá dos servidores e do Google Sheets. Continuar?');">
-                                    <button type="submit" class="btn-delete"><i class="ph ph-trash"></i></button>
+                                    <button type="submit" class="btn-delete" aria-label="Excluir"><i class="ph ph-trash"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -353,6 +367,55 @@
 
     </div>
 
+    <div id="modalEditarProduto" class="modal-overlay">
+        <div class="modal-content">
+            <button type="button" class="modal-close" onclick="fecharModalEditar()"><i class="ph ph-x"></i></button>
+            <h2 style="margin-bottom: 20px;"><i class="ph ph-pencil"></i> Editar Produto</h2>
+            
+            <form action="/editar_produto" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="hidden" name="id_produto" id="edit_id">
+                
+                <div>
+                    <label>Nome do Produto</label>
+                    <input type="text" name="nome" id="edit_nome" required style="margin:0;">
+                </div>
+                
+                <div>
+                    <label>Categoria</label>
+                    <select name="categoria" id="edit_categoria" required style="margin:0;">
+                        <option value="Chopp">Chopp</option>
+                        <option value="Suprimento">Suprimento</option>
+                        <option value="Gás">Gás</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>Estoque Disponível</label>
+                        <input type="number" name="quantidade" id="edit_quantidade" required style="margin:0;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Preço Unitário (R$)</label>
+                        <input type="text" name="preco" id="edit_preco" required style="margin:0;">
+                    </div>
+                </div>
+
+                <div>
+                    <label>Variações (Ex: 30 Litros, 50 Litros)</label>
+                    <input type="text" name="variacao" id="edit_variacao" style="margin:0;">
+                </div>
+
+                <div>
+                    <label style="color: var(--primary);">Atualizar Imagem (Opcional)</label>
+                    <p style="font-size: 0.75em; color: var(--text-muted); margin-top:0;">Deixe vazio para manter a imagem atual.</p>
+                    <input type="file" name="imagem_arquivo" accept="image/*" style="background: var(--bg-dark); color: var(--text-muted); padding: 8px; margin:0;">
+                </div>
+
+                <button type="submit" style="margin-top: 15px; width: 100%;">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         function showTab(tabId, element) {
             document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
@@ -362,6 +425,25 @@
             closeSidebar();
         }
         function closeSidebar() { if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); } }
+
+        /* FUNÇÕES PARA ABRIR E FECHAR O MODAL DE EDIÇÃO */
+        function abrirModalEditar(id, nome, categoria, quantidade, preco, variacao) {
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nome').value = nome;
+            document.getElementById('edit_categoria').value = categoria;
+            document.getElementById('edit_quantidade').value = quantidade;
+            document.getElementById('edit_preco').value = preco;
+            
+            // Tratamento caso a variação venha como traço (vazia no banco)
+            document.getElementById('edit_variacao').value = (variacao === '-' || variacao === 'None') ? '' : variacao;
+            
+            // Exibe a janela flutuante
+            document.getElementById('modalEditarProduto').classList.add('active');
+        }
+
+        function fecharModalEditar() {
+            document.getElementById('modalEditarProduto').classList.remove('active');
+        }
 
         {% if session['tipo_usuario'] == 'admin' %}
         const notesArea = document.getElementById('adminNotes');

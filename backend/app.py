@@ -275,6 +275,58 @@ def cadastrar_produto():
             return redirect(url_for('painel_admin', erro=f"Erro ao cadastrar: {str(e)}"))
     return redirect(url_for('tela_login'))
 
+@app.route('/editar_produto', methods=['POST'])
+def editar_produto():
+    # Verifica se é admin ou auxiliar
+    if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
+        id_produto = request.form['id_produto']
+        nome = request.form['nome']
+        categoria = request.form['categoria']
+        quantidade = request.form['quantidade']
+        preco = request.form['preco']
+        variacao = request.form.get('variacao', '')
+        
+        imagem_nome = None # Inicia vazia
+        
+        # Verifica se o usuário enviou uma FOTO NOVA
+        if 'imagem_arquivo' in request.files:
+            file = request.files['imagem_arquivo']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                nome_unico = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+                caminho_salvar = os.path.join(app.static_folder, 'midia', nome_unico)
+                os.makedirs(os.path.dirname(caminho_salvar), exist_ok=True)
+                file.save(caminho_salvar)
+                imagem_nome = nome_unico # Atualiza com o nome da foto nova
+
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            
+            # Se ele enviou uma imagem nova, atualiza tudo incluindo a imagem
+            if imagem_nome:
+                cur.execute('''
+                    UPDATE produto 
+                    SET nome = %s, categoria = %s, quantidade_estoque = %s, preco = %s, variacao = %s, imagem_url = %s
+                    WHERE id = %s
+                ''', (nome, categoria, quantidade, preco, variacao, imagem_nome, id_produto))
+            # Se não enviou imagem, atualiza só os textos (mantém a imagem que já estava)
+            else:
+                cur.execute('''
+                    UPDATE produto 
+                    SET nome = %s, categoria = %s, quantidade_estoque = %s, preco = %s, variacao = %s
+                    WHERE id = %s
+                ''', (nome, categoria, quantidade, preco, variacao, id_produto))
+                
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('painel_admin', sucesso="Produto atualizado com sucesso!"))
+        except Exception as e:
+            return redirect(url_for('painel_admin', erro=f"Erro ao editar: {str(e)}"))
+            
+    return redirect(url_for('tela_login'))
+
 @app.route('/deletar_produto/<int:id_produto>', methods=['POST'])
 def deletar_produto(id_produto):
     if 'id_usuario' in session and session['tipo_usuario'] in ['admin', 'auxiliar']:
