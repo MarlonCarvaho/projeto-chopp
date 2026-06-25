@@ -69,6 +69,7 @@
         
         .menu-toggle { display: none; background: none; color: white; font-size: 2em; border: none; cursor: pointer; padding: 0; margin-right: 15px; }
         
+        /* CSS DO MODAL DE EDIÇÃO */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: var(--bg-panel); width: 90%; max-width: 450px; padding: 25px; border-radius: 12px; border: 1px solid #444; position: relative; }
@@ -106,7 +107,7 @@
             <div th:if="${tipo_usuario == 'admin'}" class="nav-item" onclick="showTab('tab-financeiro', this)"><i class="ph ph-wallet"></i> Financeiro</div>
             <div th:if="${tipo_usuario == 'admin'}" class="nav-item" onclick="showTab('tab-usuarios', this)"><i class="ph ph-users"></i> Gestão de Contas</div>
         </div>
-        <a href="/logout" class="logout"><i class="ph ph-sign-out"></i> Sair do Sistema</a>
+        <a href="/" class="logout"><i class="ph ph-sign-out"></i> Sair do Sistema</a>
     </div>
 
     <div class="main-content" id="main-content" onclick="closeSidebar()">
@@ -129,7 +130,7 @@
                         <div class="valor"><span th:text="${total_usuarios}"></span> <span class="dot"></span></div>
                     </div>
                     <div class="kpi-card">
-                        <h4><i class="ph ph-shopping-bag"></i> Pedidos Realizados</h4>
+                        <h4><i class="ph ph-shopping-bag"></i> Pedidos (Semana)</h4>
                         <div class="valor" th:text="${total_pedidos_semana}"></div>
                     </div>
                     <div class="kpi-card green">
@@ -248,7 +249,7 @@
                                     <i class="ph ph-pencil"></i>
                                 </button>
                                 
-                                <form th:if="${p.id != null}" th:action="@{/deletar_produto/{id}(id=${p.id})}" method="POST" style="margin:0;" onsubmit="return confirm('Isso removerá dos servidores. Continuar?');">
+                                <form th:if="${p.id != null}" th:action="@{/deletar_produto/{id}(id=${p.id})}" method="POST" style="margin:0;" onsubmit="return confirm('Isso removerá dos servidores e do Google Sheets. Continuar?');">
                                     <button type="submit" class="btn-delete" aria-label="Excluir"><i class="ph ph-trash"></i></button>
                                 </form>
                             </td>

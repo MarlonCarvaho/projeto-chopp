@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choperia — Delivery</title>
-    <!-- FAVICON ADICIONADO AQUI -->
-    <link rel="icon" href="{{ url_for('static', filename='midia/favicon.png') }}" type="image/png">
+    
+    <link rel="icon" th:href="@{/midia/favicon.png}" type="image/png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -467,6 +467,9 @@
             background: var(--surface-2);
             overflow: hidden;
             height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .card-img-wrap::after {
             content: '';
@@ -480,6 +483,7 @@
             object-fit: contain;
             padding: 16px;
             transition: transform 0.4s ease;
+            z-index: 1;
         }
         .produto-card:hover .produto-img { transform: scale(1.05); }
 
@@ -730,14 +734,16 @@
 </head>
 <body>
 
-    <!-- ======== NAVIGATION ======== -->
     <nav class="navbar" id="navbar" role="navigation" aria-label="Navegação principal">
-        <!-- LOGO ATUALIZADA AQUI -->
-        <a class="nav-logo" href="/painel_cliente">
-            <img src="{{ url_for('static', filename='midia/logo.png') }}" alt="Projeto Chopp" style="height: 100px; width: auto; object-fit: contain;">
+        <a class="nav-logo" href="/cliente">
+            <img th:src="@{/midia/logo.png}" alt="Projeto Chopp" style="height: 100px; width: auto; object-fit: contain;">
         </a>
 
         <div class="nav-actions">
+            <span style="color: var(--text-muted); font-size: 0.9em; margin-right: 15px;" class="nav-label">
+                Olá, <span th:text="${nomeUsuario}"></span>
+            </span>
+
             <a href="/checkout" class="btn nav-btn nav-btn-cart">
                 <i class="ph-bold ph-shopping-cart" aria-hidden="true"></i>
                 <span class="nav-label">Ver Carrinho</span>
@@ -748,7 +754,6 @@
         </div>
     </nav>
 
-    <!-- ======== HERO ======== -->
     <header class="hero" role="banner">
         <div class="hero-bg" aria-hidden="true"></div>
         <div class="hero-badge" aria-hidden="true">Delivery ativo</div>
@@ -759,60 +764,46 @@
         <p>Monte seu pedido, acompanhe o status em tempo real e receba com qualidade.</p>
     </header>
 
-    <!-- ======== PAGE BODY ======== -->
     <main class="page-body" id="main-content">
 
-        {%- if sucesso %}
-        <div class="alert-success reveal" role="alert">
+        <div th:if="${sucesso}" class="alert-success reveal" role="alert">
             <i class="ph-bold ph-check-circle" aria-hidden="true"></i>
-            {{ sucesso }}
+            <span th:text="${sucesso}"></span>
         </div>
-        {%- endif %}
+        <div th:if="${erro}" class="alert-success reveal" style="background: var(--red-soft); color: var(--red); border-color: rgba(232,64,64,0.25);" role="alert">
+            <i class="ph-bold ph-warning-circle" aria-hidden="true"></i>
+            <span th:text="${erro}"></span>
+        </div>
 
-        <!-- CHOPEIRA SECTION -->
         <section class="chopeira-section reveal" aria-labelledby="chopeira-title">
             <div class="section-header">
                 <div class="section-label">
-                    <i class="ph ph-thermometer" aria-hidden="true"></i>
-                    Equipamentos
+                    <i class="ph ph-thermometer" aria-hidden="true"></i> Equipamentos
                 </div>
                 <h2 class="section-title" id="chopeira-title">Precisa de Chopeira para o Evento?</h2>
-                <p class="section-desc">Alugue uma de nossas chopeiras disponíveis e configure o valor diretamente.</p>
+                <p class="section-desc">Adicione uma chopeira ao seu pedido, sujeito a disponibilidade.</p>
             </div>
 
-            {%- if equipamentos %}
             <form class="chopeira-form" onsubmit="adicionarChopviaAjax(event, this)">
-                <input type="hidden" name="is_equipment" value="true">
-
                 <div class="field-group">
                     <label class="field-label" for="eq_select">Modelo da Chopeira</label>
-                    <select name="id_equipamento" id="eq_select" class="field-select" required>
-                        {%- for eq in equipamentos %}
-                        <option value="{{ eq[0] }}">{{ eq[1] }}</option>
-                        {%- endfor %}
+                    <select id="eq_select" class="field-select" required>
+                        <option value="Chopeira Elétrica 1 Bico">Chopeira Elétrica 1 Bico (Padrão)</option>
+                        <option value="Chopeira Elétrica 2 Bicos">Chopeira Elétrica 2 Bicos (Premium)</option>
                     </select>
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="preco_eq">Valor do Aluguel (R$)</label>
-                    <input type="number" step="0.01" min="0" name="preco_equipamento" id="preco_eq"
-                           value="50.00" class="field-input" required>
+                    <input type="number" step="0.01" min="0" id="preco_eq" value="50.00" class="field-input" readonly>
                 </div>
 
                 <button type="submit" class="btn btn-amber">
-                    <i class="ph-bold ph-plus" aria-hidden="true"></i>
-                    Incluir
+                    <i class="ph-bold ph-plus" aria-hidden="true"></i> Incluir
                 </button>
             </form>
-            {%- else %}
-            <div class="chopeira-empty" role="alert">
-                <i class="ph-bold ph-warning" aria-hidden="true"></i>
-                Todas as chopeiras estão alugadas no momento. Volte em breve!
-            </div>
-            {%- endif %}
         </section>
 
-        <!-- PRODUCT FILTERS -->
         <div class="filter-bar reveal" role="group" aria-label="Filtrar produtos por categoria">
             <button class="filter-btn active" onclick="filtrar('Todos', this)">Todos</button>
             <button class="filter-btn" onclick="filtrar('Chopp', this)">Chopp</button>
@@ -820,148 +811,95 @@
             <button class="filter-btn" onclick="filtrar('Gás', this)">Gás</button>
         </div>
 
-        <!-- PRODUCT GRID -->
         <section aria-labelledby="vitrine-title">
             <div class="section-header reveal">
-                <div class="section-label">
-                    <i class="ph ph-storefront" aria-hidden="true"></i>
-                    Vitrine
-                </div>
+                <div class="section-label"><i class="ph ph-storefront" aria-hidden="true"></i> Vitrine</div>
                 <h2 class="section-title" id="vitrine-title">Nossos Produtos</h2>
             </div>
 
             <div class="vitrine-grid" id="vitrine" role="list">
-                {%- for p in produtos %}
-                <article class="produto-card reveal" data-categoria="{{ p.categoria }}" role="listitem">
+                
+                <article class="produto-card reveal" th:each="p : ${produtos}" th:attr="data-categoria=${p.categoria}" role="listitem">
 
                     <div class="card-img-wrap">
-                        <span class="badge-cat">{{ p.categoria }}</span>
-                        <img
-                            src="{{ url_for('static', filename='midia/' + p.imagem) }}"
-                            class="produto-img"
-                            alt="{{ p.nome }}"
-                            loading="lazy"
-                            onerror="this.src='{{ url_for('static', filename='midia/default.webp') }}'">
+                        <span class="badge-cat" th:text="${p.categoria}"></span>
+                        <img th:if="${p.imagemBase64 != null}" th:src="'data:image/jpeg;base64,' + ${p.imagemBase64}" class="produto-img" th:alt="${p.nome}">
+                        <i th:unless="${p.imagemBase64 != null}" class="ph ph-beer-bottle" style="font-size: 4em; color: var(--text-muted); z-index: 1;"></i>
                     </div>
 
                     <div class="card-body">
-                        <h3 class="card-name">{{ p.nome }}</h3>
+                        <h3 class="card-name" th:text="${p.nome}"></h3>
                         <p class="card-stock">
                             <i class="ph ph-package" aria-hidden="true"></i>
-                            Estoque: {{ p.estoque }} unid.
+                            Estoque: <span th:text="${p.quantidade}"></span> unid.
+                            <span th:if="${p.quantidade <= 0}" style="color: var(--red); font-weight: bold; margin-left: 5px;">(ESGOTADO)</span>
                         </p>
 
-                        <form class="card-order" onsubmit="adicionarViaAjax(event, this)">
-                            <input type="hidden" name="id_produto" value="{{ p.id }}">
-                            <input type="hidden" name="nome_produto" value="{{ p.nome }}">
-                            <input type="hidden" name="preco_produto" value="{{ p.preco }}">
+                        <div class="card-order">
+                            <input type="text" th:value="${p.variacao != null && p.variacao != '' ? p.variacao : 'Volume Padrão'}" class="card-select" readonly>
 
-                            {%- if p.variacoes %}
-                            <select name="variacao_escolhida" class="card-select" aria-label="Variação do produto">
-                                {%- for v in p.variacoes %}
-                                <option value="{{ v }}">{{ v }}</option>
-                                {%- endfor %}
-                            </select>
-                            {%- else %}
-                            <input type="hidden" name="variacao_escolhida" value="Padrão">
-                            {%- endif %}
-
-                            <input
-                                type="number"
-                                name="quantidade"
-                                value="1"
-                                min="1"
-                                max="{{ p.estoque }}"
-                                class="card-qty"
-                                aria-label="Quantidade">
+                            <input type="number" th:id="'qtd-' + ${p.id}" value="1" min="1" th:max="${p.quantidade}" class="card-qty" aria-label="Quantidade" th:disabled="${p.quantidade <= 0}">
 
                             <div class="price-row">
-                                <span class="price" aria-label="Preço: R$ {{ p.preco }}">
-                                    R$ {{ p.preco }}
-                                </span>
-                                <button type="submit" class="btn-add-card" aria-label="Adicionar {{ p.nome }} ao carrinho">
+                                <span class="price">R$ <span th:text="${p.preco}"></span></span>
+                                
+                                <button type="button" class="btn-add-card" 
+                                        th:data-id="${p.id}" 
+                                        th:data-nome="${p.nome}" 
+                                        th:data-preco="${p.preco}"
+                                        th:disabled="${p.quantidade <= 0}"
+                                        th:style="${p.quantidade <= 0} ? 'background: var(--text-dim); cursor: not-allowed; box-shadow: none;' : ''"
+                                        onclick="adicionarAoCarrinho(this)">
                                     <i class="ph-bold ph-plus" aria-hidden="true"></i>
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </article>
-                {%- endfor %}
+
             </div>
         </section>
 
-        <!-- DIVIDER -->
         <div class="section-divider" aria-hidden="true"></div>
 
-        <!-- ORDER HISTORY -->
         <section class="history-section" aria-labelledby="history-title">
             <div class="section-header reveal">
-                <div class="section-label">
-                    <i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i>
-                    Histórico
-                </div>
+                <div class="section-label"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i> Histórico</div>
                 <h2 class="section-title" id="history-title">Seus Pedidos</h2>
             </div>
 
-            {%- if meus_pedidos %}
-            <div class="pedidos-grid" role="list">
-                {%- for ped in meus_pedidos %}
-                <article class="pedido-card reveal" role="listitem">
+            <div th:if="${meus_pedidos != null}" class="pedidos-grid" role="list">
+                <article class="pedido-card reveal" th:each="ped : ${meus_pedidos}" role="listitem">
                     <header class="ped-header">
-                        <span class="ped-id">Pedido #{{ ped[0] }}</span>
-                        <span class="ped-status
-                            {%- if ped[2] == 'pendente' %} status-pendente
-                            {%- elif ped[2] == 'entregue' %} status-entregue
-                            {%- elif ped[2] == 'apto_retirada' %} status-apto
-                            {%- else %} status-preparo{%- endif %}"
-                            role="status">
-                            {%- if ped[2] == 'apto_retirada' %}Apto p/ retirada
-                            {%- else %}{{ ped[2].replace('_', ' ').capitalize() }}{%- endif %}
-                        </span>
+                        <span class="ped-id" th:text="'Pedido #' + ${ped.id}"></span>
+                        <span class="ped-status" th:text="${ped.status}" role="status"></span>
                     </header>
-
                     <div class="ped-info">
-                        <div class="ped-info-row">
-                            <i class="ph ph-beer-stein" aria-hidden="true"></i>
-                            <span>{{ ped[3] }}</span>
-                        </div>
-                        <div class="ped-info-row">
-                            <i class="ph ph-map-pin" aria-hidden="true"></i>
-                            <span>{{ ped[5] }}</span>
-                        </div>
-                        <div class="ped-info-date">
-                            <i class="ph ph-calendar-blank" aria-hidden="true"></i>
-                            <time>{{ ped[1].strftime('%d/%m %H:%M') if ped[1] else '—' }}</time>
-                        </div>
+                        <div class="ped-info-row"><i class="ph ph-beer-stein"></i><span th:text="${ped.produtos}"></span></div>
+                        <div class="pedidos-row"><i class="ph ph-map-pin"></i><span th:text="${ped.endereco}"></span></div>
                     </div>
                 </article>
-                {%- endfor %}
             </div>
-            {%- else %}
-            <div class="empty-state reveal">
+            
+            <div th:unless="${meus_pedidos != null}" class="empty-state reveal">
                 <i class="ph ph-receipt" aria-hidden="true"></i>
                 <p>Nenhum pedido realizado ainda.<br>Monte seu carrinho e finalize acima!</p>
             </div>
-            {%- endif %}
         </section>
 
     </main>
 
-    <!-- ======== TOAST ======== -->
     <div id="toast" role="status" aria-live="polite">
         <div class="toast-icon"><i class="ph-bold ph-check" aria-hidden="true"></i></div>
         <span id="toast-msg"></span>
     </div>
 
-    <!-- ======== SCRIPTS ======== -->
     <script>
-        /* ---- Scroll-based navbar ---- */
         const navbar = document.getElementById('navbar');
         window.addEventListener('scroll', () => {
             navbar.classList.toggle('scrolled', window.scrollY > 20);
         }, { passive: true });
 
-        /* ---- Scroll reveal observer ---- */
         const revealItems = document.querySelectorAll('.reveal');
         const revealObs = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -973,17 +911,13 @@
         }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
         revealItems.forEach((el, i) => {
-            /* Stagger sibling cards in same grid */
             const parent = el.parentElement;
             const siblings = parent ? [...parent.querySelectorAll('.reveal')] : [];
             const idx = siblings.indexOf(el);
-            if (idx >= 0 && idx < 4) {
-                el.style.transitionDelay = (idx * 0.07) + 's';
-            }
+            if (idx >= 0 && idx < 4) { el.style.transitionDelay = (idx * 0.07) + 's'; }
             revealObs.observe(el);
         });
 
-        /* ---- Product filter ---- */
         function filtrar(cat, btn) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -993,43 +927,48 @@
             });
         }
 
-        /* ---- AJAX add product ---- */
-        function adicionarViaAjax(e, form) {
-            e.preventDefault();
-            const btn = form.querySelector('.btn-add-card');
-            btn.disabled = true;
+        let carrinho = JSON.parse(localStorage.getItem('carrinhoChopp')) || [];
 
-            fetch('/adicionar_carrinho_ajax', { method: 'POST', body: new FormData(form) })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === 'ok') {
-                        mostrarToast(d.nome_produto + ' adicionado ao carrinho');
-                        /* brief success pulse */
-                        btn.style.background = 'var(--green)';
-                        setTimeout(() => { btn.style.background = ''; btn.disabled = false; }, 1000);
-                    } else {
-                        btn.disabled = false;
-                    }
-                })
-                .catch(() => { btn.disabled = false; });
+        function adicionarAoCarrinho(botao) {
+            const id = botao.getAttribute('data-id');
+            const nome = botao.getAttribute('data-nome');
+            const preco = parseFloat(botao.getAttribute('data-preco'));
+            
+            const inputQtd = document.getElementById('qtd-' + id);
+            const qtdSelecionada = parseInt(inputQtd.value) || 1;
+
+            const itemExistente = carrinho.find(item => item.id === id);
+            if (itemExistente) {
+                itemExistente.quantidade += qtdSelecionada;
+            } else {
+                carrinho.push({ id, nome, preco, grandmother: 1, quantidade: qtdSelecionada });
+            }
+
+            localStorage.setItem('carrinhoChopp', JSON.stringify(carrinho));
+            
+            mostrarToast(qtdSelecionada + 'x ' + nome + ' adicionado!');
+            botao.style.background = 'var(--green)';
+            setTimeout(() => { botao.style.background = ''; }, 1000);
         }
 
-        /* ---- AJAX add chopeira ---- */
         function adicionarChopviaAjax(e, form) {
             e.preventDefault();
-            const fd = new FormData(form);
             const sel = document.getElementById('eq_select');
-            fd.append('is_equipamento', 'true');
-            fd.append('nome_equipamento', sel.options[sel.selectedIndex].text);
+            const preco = parseFloat(document.getElementById('preco_eq').value);
+            const nome = sel.options[sel.selectedIndex].text;
+            const id = 'eq-' + sel.value;
 
-            fetch('/adicionar_carrinho_ajax', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === 'ok') mostrarToast('Chopeira adicionada ao carrinho!');
-                });
+            const itemExistente = carrinho.find(item => item.id === id);
+            if (itemExistente) {
+                itemExistente.quantidade += 1;
+            } else {
+                carrinho.push({ id, nome, preco, quantidade: 1 });
+            }
+
+            localStorage.setItem('carrinhoChopp', JSON.stringify(carrinho));
+            mostrarToast('Chopeira adicionada ao carrinho!');
         }
 
-        /* ---- Toast notification ---- */
         let toastTimer;
         function mostrarToast(msg) {
             const toast = document.getElementById('toast');

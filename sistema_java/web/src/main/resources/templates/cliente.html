@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choperia — Delivery</title>
+    
+    <link rel="icon" th:href="@{/midia/favicon.png}" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --amber: #E88A00; --amber-glow: rgba(232, 138, 0, 0.18); --amber-soft: rgba(232, 138, 0, 0.08);
+            --green: #12A871; --green-soft: rgba(18, 168, 113, 0.12); --red: #E84040; --red-soft: rgba(232, 64, 64, 0.12);
+            --bg: #0C0C10; --surface: #13131A; --surface-2: #1C1C28; --border: rgba(255,255,255,0.07); --border-2: rgba(255,255,255,0.12);
+            --text: #F0F0F8; --text-muted: #8A8A9E; --text-dim: #5A5A6E; --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px; --radius-xl: 28px;
+            --nav-h: 68px; --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; min-height: 100vh; padding-bottom: 80px; }
+        .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.6s cubic-bezier(0.2,0,0.1,1), transform 0.6s cubic-bezier(0.2,0,0.1,1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .navbar { position: sticky; top: 0; z-index: 200; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(16px, 4vw, 40px); background: rgba(12, 12, 16, 0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .nav-btn { display: flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: var(--radius-md); font-size: 0.875rem; text-decoration: none; font-weight: 500; }
+        .nav-btn-cart { background: var(--green); color: #fff; border:none; cursor:pointer;}
+        .nav-btn-logout { background: var(--red-soft); color: var(--red); border: 1px solid rgba(232,64,64,0.2); }
+        .hero { position: relative; padding: clamp(60px, 10vw, 120px) 20px text-align: center; text-align: center;}
+        .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 800; }
+        .hero .highlight { color: var(--amber); }
+        .page-body { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
+        .alert-success { display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: var(--green-soft); border: 1px solid rgba(18,168,113,0.25); border-radius: var(--radius-md); color: var(--green); margin-bottom: 32px; }
+        .chopeira-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 30px; margin-bottom: 48px; }
+        .chopeira-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end; margin-top: 20px; }
+        @media (max-width: 640px) { .chopeira-form { grid-template-columns: 1fr; } }
+        .field-group { display: flex; flex-direction: column; gap: 6px; }
+        .field-input, .field-select { padding: 11px 14px; background: var(--bg); border: 1px solid var(--border-2); border-radius: var(--radius-sm); color: var(--text); width: 100%; outline: none;}
+        .btn-amber { background: var(--amber); color: #0C0C10; padding: 12px 22px; font-weight:600; border:none; border-radius:var(--radius-sm); cursor:pointer;}
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 28px; overflow-x: auto; }
+        .filter-btn { padding: 8px 18px; border-radius: 100px; border: 1px solid var(--border-2); background: var(--surface); color: var(--text-muted); cursor: pointer; }
+        .filter-btn.active { background: var(--amber); color: #0C0C10; font-weight: 600; }
+        .vitrine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .produto-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; }
+        .card-img-wrap { background: var(--surface-2); height: 180px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .produto-img { width: 100%; height: 100%; object-fit: contain; padding: 16px; }
+        .badge-cat { position: absolute; top: 12px; left: 12px; background: var(--amber-soft); color: var(--amber); font-size: 0.7rem; padding: 4px 10px; border-radius: 100px; }
+        .card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+        .card-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+        .card-stock { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 16px; }
+        .card-order { background: var(--bg); padding: 14px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+        .price-row { display: flex; align-items: center; justify-content: space-between; }
+        .price { font-family: 'Syne', sans-serif; font-size: 1.3rem; color: var(--green); font-weight: 700; }
+        .btn-add-card { width: 38px; height: 38px; background: var(--amber); border: none; border-radius: var(--radius-sm); color: #0C0C10; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .section-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-2), transparent); margin: 48px 0; }
+        
+        .pedidos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .pedido-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+        .ped-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .ped-id { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+        .ped-status { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; background: var(--amber-soft); color: var(--amber); }
+        .ped-info { display: flex; flex-direction: column; gap: 6px; }
+        .ped-info-row { display: flex; align-items: flex-start; gap: 8px; font-size: 0.875rem; color: var(--text-muted); }
+        .ped-info-row i { color: var(--amber); flex-shrink: 0; margin-top: 2px; }
+        
+        #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface-2); border: 1px solid var(--border-2); padding: 13px 22px; border-radius: 100px; opacity: 0; transition: 0.3s; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar" id="navbar">
+        <a class="nav-logo" href="/cliente">
+            <img th:src="@{/midia/logo.png}" alt="Logo" style="height: 100px; width: auto;">
+        </a>
+        <div class="nav-actions">
+            <span style="color: var(--text-muted); font-size: 0.9em; margin-right: 15px;">Olá, <span th:text="${nomeUsuario}"></span></span>
+            <a href="/checkout" class="btn nav-btn nav-btn-cart"><i class="ph-bold ph-shopping-cart"></i> Ver Carrinho</a>
+            <a href="/logout" class="btn nav-btn nav-btn-logout"><i class="ph-bold ph-sign-out"></i></a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-badge">Delivery ativo</div>
+        <h1>Seu chopp perfeito, <span class="highlight">onde você estiver</span></h1>
+        <p>Monte seu pedido e receba com máxima qualidade.</p>
+    </header>
+
+    <main class="page-body" id="main-content">
+        <div th:if="${sucesso}" class="alert-success reveal" role="alert"><span th:text="${sucesso}"></span></div>
+        <div th:if="${erro}" class="alert-success reveal" style="background: var(--red-soft); color: var(--red); border-color: rgba(232,64,64,0.25);" role="alert"><span th:text="${erro}"></span></div>
+
+        <section class="chopeira-section reveal">
+            <h2>Precisa de Chopeira para o Evento?</h2>
+            <form class="chopeira-form" onsubmit="adicionarChopviaAjax(event, this)">
+                <div class="field-group">
+                    <label>Modelo da Chopeira</label>
+                    <select id="eq_select" class="field-select">
+                        <option value="1 Bico">Chopeira Elétrica 1 Bico (Padrão)</option>
+                        <option value="2 Bicos">Chopeira Elétrica 2 Bicos (Premium)</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Valor Aluguel</label>
+                    <input type="number" id="preco_eq" value="50.00" class="field-input" readonly>
+                </div>
+                <button type="submit" class="btn-amber"><i class="ph-bold ph-plus"></i> Incluir</button>
+            </form>
+        </section>
+
+        <div class="filter-bar reveal">
+            <button class="filter-btn active" onclick="filtrar('Todos', this)">Todos</button>
+            <button class="filter-btn" onclick="filtrar('Chopp', this)">Chopp</button>
+            <button class="filter-btn" onclick="filtrar('Suprimento', this)">Acessórios</button>
+            <button class="filter-btn" onclick="filtrar('Gás', this)">Gás</button>
+        </div>
+
+        <section>
+            <div class="vitrine-grid" id="vitrine">
+                <article class="produto-card reveal" th:each="p : ${produtos}" th:attr="data-categoria=${p.categoria}">
+                    <div class="card-img-wrap">
+                        <span class="badge-cat" th:text="${p.categoria}"></span>
+                        <img th:if="${p.imagemBase64 != null}" th:src="'data:image/jpeg;base64,' + ${p.imagemBase64}" class="produto-img">
+                        <i th:unless="${p.imagemBase64 != null}" class="ph ph-beer-bottle" style="font-size:3em; color:var(--text-muted);"></i>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-name" th:text="${p.nome}"></h3>
+                        <p class="card-stock">Estoque: <span th:text="${p.getQuantidade()}"></span> un. 
+                            <span th:if="${p.getQuantidade() <= 0}" style="color:var(--red); font-weight:bold;">(ESGOTADO)</span>
+                        </p>
+                        <div class="card-order">
+                            <input type="text" th:value="${p.variacao != null && p.variacao != '' ? p.variacao : 'Volume Padrão'}" class="field-input" readonly>
+                            <input type="number" th:id="'qtd-' + ${p.id}" value="1" min="1" th:max="${p.getQuantidade()}" class="field-input" th:disabled="${p.getQuantidade() <= 0}">
+                            <div class="price-row">
+                                <span class="price">R$ <span th:text="${p.preco}"></span></span>
+                                <button type="button" class="btn-add-card" th:data-id="${p.id}" th:data-nome="${p.nome}" th:data-preco="${p.preco}" th:disabled="${p.getQuantidade() <= 0}" th:style="${p.getQuantidade() <= 0} ? 'background:var(--text-dim); cursor:not-allowed;' : ''" onclick="adicionarAoCarrinho(this)">
+                                    <i class="ph-bold ph-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+        
+        <section class="reveal">
+            <div style="margin-bottom: 28px;">
+                <div style="color: var(--amber); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;"><i class="ph ph-clock-counter-clockwise"></i> Histórico</div>
+                <h2 style="font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700;">Seus Pedidos</h2>
+            </div>
+
+            <div th:if="${meus_pedidos != null}" class="pedidos-grid">
+                <article class="pedido-card" th:each="ped : ${meus_pedidos}">
+                    <header class="ped-header">
+                        <span class="ped-id" th:text="'Pedido #' + ${ped.id}"></span>
+                        <span class="ped-status" th:text="${ped.status}"></span>
+                    </header>
+                    <div class="ped-info">
+                        <div class="ped-info-row"><i class="ph ph-beer-stein"></i><span th:text="${ped.produtos}"></span></div>
+                        <div class="ped-info-row"><i class="ph ph-map-pin"></i><span th:text="${ped.endereco}"></span></div>
+                        <div class="ped-info-row"><i class="ph ph-money"></i><span th:text="'R$ ' + ${ped.valorTotal}"></span></div>
+                    </div>
+                </article>
+            </div>
+            
+            <div th:unless="${meus_pedidos != null}" class="empty-state" style="text-align: center; padding: 48px 24px; color: var(--text-dim);">
+                <i class="ph ph-receipt" style="font-size:2em; opacity: 0.4;"></i>
+                <p style="margin-top: 10px;">Nenhum pedido realizado ainda.<br>Monte seu carrinho e finalize acima!</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast"><span id="toast-msg"></span></div>
+
+    <script>
+        const revealItems = document.querySelectorAll('.reveal');
+        const revealObs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); } });
+        }, { threshold: 0.05 });
+        revealItems.forEach(el => revealObs.observe(el));
+
+        function filtrar(cat, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.produto-card').forEach(card => {
+                card.style.display = (cat === 'Todos' || card.dataset.categoria === cat) ? 'flex' : 'none';
+            });
+        }
+
+        let carrinho = JSON.parse(localStorage.getItem('carrinhoChopp')) || [];
+
+        function adicionarAoCarrinho(botao) {
+            const id = botao.getAttribute('data-id');
+            const nome = botao.getAttribute('data-nome');
+            const preco = parseFloat(botao.getAttribute('data-preco'));
+            const qtd = parseInt(document.getElementById('qtd-' + id).value) || 1;
+
+            const existente = carrinho.find(item => item.id === id);
+            if (existente) { existente.quantidade += qtd; } 
+            else { carrinho.push({ id, nome, preco, quantidade: qtd }); }
+            localStorage.setItem('carrinhoChopp', JSON.stringify(carrinho));
+            mostrarToast(qtd + 'x ' + nome + ' adicionado!');
+        }
+
+        function adicionarChopviaAjax(e, form) {
+            e.preventDefault();
+            const sel = document.getElementById('eq_select');
+            const nome = sel.options[sel.selectedIndex].text;
+            carrinho.push({ id: 'eq-'+sel.value, nome, preco: 50.00, quantidade: 1 });
+            localStorage.setItem('carrinhoChopp', JSON.stringify(carrinho));
+            mostrarToast('Chopeira adicionada!');
+        }
+
+        function mostrarToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+    </script>
+</body>
+</html>

@@ -1,74 +1,55 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Projeto Chopp</title>
-    <link rel="icon" href="{{ url_for('static', filename='midia/favicon.png') }}" type="image/png">
+    <title>Choperia — Cadastre-se</title>
+    <link rel="icon" th:href="@{/midia/favicon.png}" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #1e1e1e;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
-        }
-        h2 { color: #FF8C00; text-align: center; margin-bottom: 20px; }
-        input {
-            width: 100%; padding: 10px; margin: 10px 0;
-            background-color: #2c2c2c; color: white;
-            border: 1px solid #444; border-radius: 5px; box-sizing: border-box;
-        }
-        input:focus { outline: none; border-color: #FF8C00; }
-        .btn-laranja {
-            width: 100%; background-color: #FF8C00; color: #121212;
-            padding: 12px; border: none; border-radius: 5px;
-            font-weight: bold; font-size: 1.1em; cursor: pointer;
-            margin-top: 15px; transition: 0.3s;
-        }
-        .btn-laranja:hover { background-color: #e67e00; box-shadow: 0 0 10px #FF8C00; }
-        .erro { color: #ff4d4d; text-align: center; font-weight: bold; }
-        .sucesso { color: #00cc66; text-align: center; font-weight: bold; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --amber: #E88A00; --bg: #0C0C10; --surface: #13131A; --border: rgba(255,255,255,0.07); --text: #F0F0F8; --text-muted: #8A8A9E; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-box { background: var(--surface); padding: 40px; border-radius: 20px; border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; margin: 20px; }
+        .login-logo { width: 120px; margin-bottom: 20px; }
+        h1 { font-family: 'Syne', sans-serif; font-size: 1.6rem; margin-bottom: 10px; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 30px; font-size: 0.9rem; }
+        form { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 25px; }
+        label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: -10px; }
+        input { width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--amber); }
+        button { background: var(--amber); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        button:hover { background: #ff9d1a; }
+        .signup-text { color: var(--text-muted); font-size: 0.85rem; margin-top: 15px; }
+        .signup-text a { color: var(--amber); text-decoration: none; font-weight: 500; transition: 0.2s; }
+        .signup-text a:hover { text-decoration: underline; }
+        
+        .erro-alerta { background: rgba(232, 64, 64, 0.1); color: #E84040; padding: 12px; border-radius: 10px; border: 1px solid rgba(232, 64, 64, 0.3); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
+    <div class="login-box">
+        <img th:src="@{/midia/logo.png}" alt="Projeto Chopp" class="login-logo">
+        <h1>Criar Conta</h1>
+        <p class="subtitle">Preencha os dados abaixo para comprar no nosso sistema.</p>
 
-    <div class="container">
-        <h2>Criar Conta</h2>
-        
-        {% if erro %} <p class="erro">{{ erro }}</p> {% endif %}
-        {% if sucesso %} <p class="sucesso">{{ sucesso }}</p> {% endif %}
+        <div th:if="${erro}" class="erro-alerta">
+            <i class="ph-fill ph-warning-circle"></i> <span th:text="${erro}"></span>
+        </div>
 
-        <form action="/cadastrar" method="POST">
-            <label>Nome Completo:</label>
-            <input type="text" name="nome" required>
-
-            <label>E-mail:</label>
-            <input type="email" name="email" required>
-
-            <label>Senha:</label>
-            <input type="password" name="senha" required>
-
-            <label>Documento (CPF):</label>
-            <input type="text" name="documento" required>
-
-            <label>Data de Nascimento:</label>
-            <input type="date" name="data_nascimento" required>
-
-            <button type="submit" class="btn-laranja">Cadastrar</button>
+        <form action="/fazer_cadastro" method="POST">
+            <label for="nome">Nome Completo</label>
+            <input type="text" id="nome" name="nome" placeholder="Ex: João da Silva" required>
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" placeholder="Seu melhor e-mail" required>
+            <label for="senha">Crie uma Senha</label>
+            <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" required>
+            <button type="submit"><i class="ph-bold ph-user-plus"></i> Finalizar Cadastro</button>
         </form>
+        <p class="signup-text">Já possui conta? <a href="/">Faça login aqui</a></p>
     </div>
-
 </body>
 </html>

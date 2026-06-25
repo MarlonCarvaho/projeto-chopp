@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choperia — Finalizar Pedido</title>
+    
+    <link rel="icon" th:href="@{/midia/favicon.png}" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --amber:      #E88A00; --amber-glow: rgba(232, 138, 0, 0.18); --amber-soft: rgba(232, 138, 0, 0.08);
+            --green:      #12A871; --bg: #0C0C10; --surface: #13131A; --surface-2: #1C1C28;
+            --border:     rgba(255,255,255,0.07); --border-2: rgba(255,255,255,0.12);
+            --text:       #F0F0F8; --text-muted: #8A8A9E; --text-dim: #5A5A6E;
+            --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding-bottom: 60px; }
+        .navbar { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(16px, 4vw, 40px); background: rgba(12,12,16,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .btn-back { display: flex; align-items: center; gap: 7px; padding: 8px 16px; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: 0.2s; }
+        .btn-back:hover { color: var(--text); background: var(--border-2); }
+        .page { max-width: 1100px; margin: 0 auto; padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 40px); display: grid; grid-template-columns: 1fr minmax(0, 400px); gap: 28px; }
+        @media (max-width: 768px) { .page { grid-template-columns: 1fr; } }
+        .page-title { font-family: 'Syne', sans-serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; color: var(--text); margin-bottom: 28px; grid-column: 1 / -1; }
+        .section-label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--amber); margin-bottom: 10px; }
+        .section-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+        .box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(18px, 3vw, 28px); margin-bottom: 20px; }
+        .order-table { width: 100%; border-collapse: collapse; }
+        .order-table th { font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); padding-bottom: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .order-table th:last-child { text-align: right; }
+        .order-table td { padding: 13px 0; border-bottom: 1px solid var(--border); }
+        .order-table td:last-child { text-align: right; color: var(--green); font-weight: 600; }
+        .total-row { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--border-2); }
+        .total-value { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--green); }
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .radio-list { display: flex; flex-direction: column; gap: 10px; }
+        .radio-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: var(--bg); border: 1px solid var(--border-2); border-radius: var(--radius-md); cursor: pointer; }
+        .radio-item:has(input:checked) { border-color: var(--amber); background: var(--amber-soft); }
+        .field-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; display: block; }
+        .field-input { width: 100%; padding: 11px 14px; background: var(--bg); border: 1px solid var(--border-2); border-radius: var(--radius-sm); color: var(--text); outline: none; }
+        .field-input:focus { border-color: var(--amber); }
+        .btn-finalizar { width: 100%; padding: 15px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-md); font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px; }
+        .btn-finalizar:hover { background: #0f9460; box-shadow: 0 6px 24px rgba(18,168,113,0.35); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a class="nav-logo" href="/cliente">
+            <img th:src="@{/midia/logo.png}" alt="Logo" style="height: 100px; width: auto;">
+        </a>
+        <a href="/cliente" class="btn-back"><i class="ph-bold ph-arrow-left"></i> Voltar à vitrine</a>
+    </nav>
+
+    <main class="page">
+        <h1 class="page-title">Finalizar Pedido</h1>
+
+        <section style="min-width: 0;">
+            <div class="box">
+                <div class="section-label"><i class="ph ph-shopping-cart"></i> Resumo</div>
+                <h2 class="section-title">Itens Selecionados</h2>
+                <div id="containerCarrinho"></div>
+            </div>
+        </section>
+
+        <aside class="sidebar" id="sidebarCheckout" style="display: none;">
+            <form action="/finalizar_pedido" method="POST" onsubmit="prepararEnvio(event)">
+                <input type="hidden" name="produtos" id="inputProdutos">
+                <input type="hidden" name="valor_total" id="inputValorTotal">
+
+                <div class="box">
+                    <div class="section-label"><i class="ph ph-user"></i> Seus Dados</div>
+                    <h2 class="section-title">Informações de Contato</h2>
+                    <div>
+                        <label class="field-label" for="cliente">Nome Completo</label>
+                        <!-- AQUI ESTÁ A ALTERAÇÃO: Nome puxado automaticamente e bloqueado para edição -->
+                        <input type="text" id="cliente" name="cliente" class="field-input" th:value="${nomeUsuario}" readonly required style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                </div>
+
+                <div class="box">
+                    <div class="section-label"><i class="ph ph-truck"></i> Entrega</div>
+                    <h2 class="section-title">Método de Entrega</h2>
+                    <div class="radio-list">
+                        <label class="radio-item">
+                            <input type="radio" name="tipo_entrega" value="retirada" checked onchange="toggleEndereco()">
+                            <div style="margin-left:10px;">Retirada na Loja</div>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="tipo_entrega" value="entrega" onchange="toggleEndereco()">
+                            <div style="margin-left:10px;">Entrega no Endereço</div>
+                        </label>
+                    </div>
+                    <div id="div-endereco" style="display:none; margin-top:12px;">
+                        <label class="field-label" for="endereco">Endereço de Entrega</label>
+                        <input type="text" id="endereco" name="endereco" class="field-input" placeholder="Rua, Número, Bairro">
+                    </div>
+                </div>
+
+                <div class="box">
+                    <div class="section-label"><i class="ph ph-credit-card"></i> Pagamento</div>
+                    <h2 class="section-title">Forma de Pagamento</h2>
+                    <div class="radio-list">
+                        <label class="radio-item">
+                            <input type="radio" name="pagamento" value="pix" checked>
+                            <div style="margin-left:10px;">PIX</div>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="pagamento" value="cartao">
+                            <div style="margin-left:10px;">Cartão (Maquininha)</div>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-finalizar" style="margin-top:20px;"><i class="ph-bold ph-check-circle"></i> Confirmar Pedido</button>
+                </div>
+            </form>
+        </aside>
+    </main>
+
+    <script>
+        const carrinho = JSON.parse(localStorage.getItem('carrinhoChopp')) || [];
+        
+        function carregarResumo() {
+            const container = document.getElementById('containerCarrinho');
+            const sidebar = document.getElementById('sidebarCheckout');
+            if (carrinho.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:32px 0; color:var(--text-dim);"><p>Carrinho vazio.</p></div>`;
+                sidebar.style.display = 'none';
+                return;
+            }
+            sidebar.style.display = 'flex';
+            let tableHTML = `<table class="order-table"><thead><tr><th>Item</th><th>Qtd.</th><th>Subtotal</th></tr></thead><tbody>`;
+            let totalPedido = 0;
+            carrinho.forEach(item => {
+                const subtotal = item.preco * item.quantidade;
+                totalPedido += subtotal;
+                tableHTML += `<tr><td>${item.nome}</td><td>${item.quantidade}x</td><td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td></tr>`;
+            });
+            tableHTML += `</tbody></table><div class="total-row"><span style="color:var(--text-muted);">TOTAL</span><span class="total-value">R$ ${totalPedido.toFixed(2).replace('.', ',')}</span></div>`;
+            container.innerHTML = tableHTML;
+        }
+
+        function toggleEndereco() {
+            const tipo = document.querySelector('input[name="tipo_entrega"]:checked').value;
+            document.getElementById('div-endereco').style.display = (tipo === 'entrega') ? 'block' : 'none';
+            document.getElementById('endereco').required = (tipo === 'entrega');
+        }
+
+        function prepararEnvio(event) {
+            const tipo = document.querySelector('input[name="tipo_entrega"]:checked').value;
+            if (tipo === 'retirada') { document.getElementById('endereco').value = "Retirada na Loja"; }
+            document.getElementById('inputProdutos').value = carrinho.map(item => `${item.quantidade}x ${item.nome}`).join(' | ');
+            const totalDinheiro = carrinho.reduce((soma, item) => soma + (item.preco * item.quantidade), 0);
+            document.getElementById('inputValorTotal').value = totalDinheiro.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            localStorage.removeItem('carrinhoChopp');
+        }
+        carregarResumo();
+    </script>
+</body>
+</html>

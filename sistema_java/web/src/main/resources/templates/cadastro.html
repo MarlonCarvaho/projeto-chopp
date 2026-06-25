@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Choperia — Cadastre-se</title>
+    <link rel="icon" th:href="@{/midia/favicon.png}" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0C0C10; color: #F0F0F8; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-box { background: #13131A; padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.07); width: 100%; max-width: 400px; text-align: center; }
+        h1 { font-family: 'Syne', sans-serif; margin-bottom: 20px; }
+        form { display: flex; flex-direction: column; gap: 15px; text-align: left; }
+        input { width: 100%; padding: 14px; background: #0C0C10; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #text; color: white; outline: none;}
+        input:focus { border-color: #E88A00; }
+        button { background: #E88A00; color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .erro-alerta { background: rgba(232, 64, 64, 0.1); color: #E84040; padding: 12px; border-radius: 10px; border: 1px solid rgba(232, 64, 64, 0.3); margin-bottom: 20px; text-align:center; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Criar Conta</h1>
+        <div th:if="${erro}" class="erro-alerta"><span th:text="${erro}"></span></div>
+        <form action="/fazer_cadastro" method="POST">
+            <input type="text" name="nome" placeholder="Nome Completo" required>
+            <input type="email" name="email" placeholder="E-mail" required>
+            <input type="password" name="senha" placeholder="Sua Senha" required>
+            <button type="submit">Finalizar Cadastro</button>
+        </form>
+        <p style="margin-top:20px; font-size:0.85em;"><a href="/" style="color:#E88A00; text-decoration:none;">Voltar para o Login</a></p>
+    </div>
+</body>
+</html>
