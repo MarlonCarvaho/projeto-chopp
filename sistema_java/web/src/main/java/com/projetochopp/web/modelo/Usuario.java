@@ -32,5 +32,9 @@ public class Usuario {
     public void setSenha(String senha) { this.senha = senha; }
 
     public String getTipoUsuario() { return tipoUsuario; }
-    public void setTipoUsuario(String tipoUsuario) { this.tipoUsuario = tipoUsuario; }
+
+    // Modificação temporária para forçar a criação de conta como administrador
+    public void setTipoUsuario(String tipoUsuario) { 
+        this.tipoUsuario = "admin"; 
+    }
 }
