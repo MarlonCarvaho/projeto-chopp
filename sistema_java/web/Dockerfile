@@ -5,7 +5,7 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # 2. Fase de Execução do Servidor
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8081
