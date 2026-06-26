@@ -33,8 +33,8 @@ public class Usuario {
 
     public String getTipoUsuario() { return tipoUsuario; }
 
-    // Modificação temporária para forçar a criação de conta como administrador
+    // Código restaurado: volta a aceitar o tipo enviado pelo sistema (cliente)
     public void setTipoUsuario(String tipoUsuario) { 
-        this.tipoUsuario = "admin"; 
+        this.tipoUsuario = tipoUsuario; 
     }
 }
